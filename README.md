@@ -15,6 +15,11 @@ This project is tryig to explore the power of Workflow.
 pip install os-pywf
 ```
 
+## Unit Tests
+
+```
+sh scripts/test.sh
+```
 
 ## License
 
