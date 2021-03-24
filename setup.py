@@ -30,7 +30,7 @@ setup(
     install_requires=open("requirements/requirements.txt").read().split("\n"),
     python_requires=">=3.6",
     zip_safe=False,
-    entry_points={"console_scripts": ["pywf = os_pywf.main:main"]},
+    entry_points={"console_scripts": ["os-pywf = os_pywf.main:main"]},
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",
