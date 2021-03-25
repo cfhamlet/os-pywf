@@ -31,10 +31,103 @@ class CommandFinder(click.MultiCommand):
 
 
 def execute(**kwargs):
+    import pywf as wf
+
+    gs = wf.GlobalSettings()
+
     @click.command(cls=CommandFinder, context_settings=dict(obj=kwargs))
     @click.version_option(version=__version__)
+    @click.option(
+        "--compute-threads",
+        default=gs.compute_threads,
+        show_default=True,
+        type=click.INT,
+        help="Number of compute threads.",
+    )
+    @click.option(
+        "--handler-threads",
+        default=gs.handler_threads,
+        show_default=True,
+        type=click.INT,
+        help="Number of handler threads.",
+    )
+    @click.option(
+        "--poller-threads",
+        default=gs.poller_threads,
+        show_default=True,
+        type=click.INT,
+        help="Number of poller threads.",
+    )
+    @click.option(
+        "--dns-threads",
+        default=gs.dns_threads,
+        show_default=True,
+        type=click.INT,
+        help="Number of dns threads.",
+    )
+    @click.option(
+        "--dns-ttl-default",
+        default=gs.dns_ttl_default,
+        show_default=True,
+        type=click.INT,
+        help="Default seconds of dns ttl.",
+    )
+    @click.option(
+        "--dns-ttl-min",
+        default=gs.dns_ttl_min,
+        show_default=True,
+        type=click.INT,
+        help="Min seconds of dns ttl.",
+    )
+    @click.option(
+        "--max-connections",
+        default=gs.endpoint_params.max_connections,
+        show_default=True,
+        type=click.INT,
+        help="Max number of connections.",
+    )
+    @click.option(
+        "--connection-timeout",
+        default=gs.endpoint_params.connect_timeout,
+        show_default=True,
+        type=click.INT,
+        help="Connect timeout.",
+    )
+    @click.option(
+        "--response-timeout",
+        default=gs.endpoint_params.response_timeout,
+        show_default=True,
+        type=click.INT,
+        help="Response timeout.",
+    )
+    @click.option(
+        "--ssl-connect-timeout",
+        default=gs.endpoint_params.ssl_connect_timeout,
+        show_default=True,
+        type=click.INT,
+        help="SSL connect timeout.",
+    )
     @click.pass_context
-    def cli(ctx):
+    def cli(ctx, **kgs):
         """Command line tool for os-pywf."""
+        for k in (
+            "compute_threads",
+            "handler_threads",
+            "poller_threads",
+            "dns_threads",
+            "dns_ttl_min",
+            "dns_ttl_default",
+        ):
+            setattr(gs, k, kgs.get(k, getattr(gs, k)))
+
+        for k in (
+            "connect_timeout",
+            "max_connections",
+            "response_timeout",
+            "ssl_connect_timeout",
+        ):
+            setattr(gs.endpoint_params, k, kgs.get(k, getattr(gs.endpoint_params, k)))
+
+        wf.WORKFLOW_library_init(gs)
 
     cli()
