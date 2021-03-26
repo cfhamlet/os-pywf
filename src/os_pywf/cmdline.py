@@ -1,4 +1,5 @@
 import click
+from click_option_group import optgroup
 
 from os_pywf.utils import walk_modules
 
@@ -37,70 +38,71 @@ def execute(**kwargs):
 
     @click.command(cls=CommandFinder, context_settings=dict(obj=kwargs))
     @click.version_option(version=__version__)
-    @click.option(
+    @optgroup.group("Workflow", help="Workflow global settings.")
+    @optgroup.option(
         "--compute-threads",
         default=gs.compute_threads,
         show_default=True,
         type=click.INT,
         help="Number of compute threads.",
     )
-    @click.option(
+    @optgroup.option(
         "--handler-threads",
         default=gs.handler_threads,
         show_default=True,
         type=click.INT,
         help="Number of handler threads.",
     )
-    @click.option(
+    @optgroup.option(
         "--poller-threads",
         default=gs.poller_threads,
         show_default=True,
         type=click.INT,
         help="Number of poller threads.",
     )
-    @click.option(
+    @optgroup.option(
         "--dns-threads",
         default=gs.dns_threads,
         show_default=True,
         type=click.INT,
         help="Number of dns threads.",
     )
-    @click.option(
+    @optgroup.option(
         "--dns-ttl-default",
         default=gs.dns_ttl_default,
         show_default=True,
         type=click.INT,
         help="Default seconds of dns ttl.",
     )
-    @click.option(
+    @optgroup.option(
         "--dns-ttl-min",
         default=gs.dns_ttl_min,
         show_default=True,
         type=click.INT,
         help="Min seconds of dns ttl.",
     )
-    @click.option(
+    @optgroup.option(
         "--max-connections",
         default=gs.endpoint_params.max_connections,
         show_default=True,
         type=click.INT,
         help="Max number of connections.",
     )
-    @click.option(
+    @optgroup.option(
         "--connection-timeout",
         default=gs.endpoint_params.connect_timeout,
         show_default=True,
         type=click.INT,
         help="Connect timeout.",
     )
-    @click.option(
+    @optgroup.option(
         "--response-timeout",
         default=gs.endpoint_params.response_timeout,
         show_default=True,
         type=click.INT,
         help="Response timeout.",
     )
-    @click.option(
+    @optgroup.option(
         "--ssl-connect-timeout",
         default=gs.endpoint_params.ssl_connect_timeout,
         show_default=True,
