@@ -51,11 +51,11 @@ Global settings of Workflow can be specified with options, ENVs is not supported
 
 You can get help information of subcommands with ``--help`` option
 
-* ``http client``
+* ``http curl``
     * most options are same as curl, so the command options line can also be used with curl
     * more than one request can be send, just specify multiple URLs
-    * extra options which curl not supported:
-        * ``--callback``, once set to an importable python function path, the function will be called when response arrived or request fail
+    * additional options which curl not supported:
+        * ``--callback``, once set to an importable python function path, the function will be invoked when response arrived or request fail
         * ``--retry``, retry times when request fail
         * ``--parallel``, send requests parallelly
 
