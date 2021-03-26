@@ -83,11 +83,7 @@ def callback(task):
     show_default=True,
     help="Maximum number of redirects allowed.",
 )
-@click.option(
-    "--parallel",
-    is_flag=True,
-    help="Send requests parallelly."
-)
+@click.option("--parallel", is_flag=True, help="Send requests parallelly.")
 @click.option(
     "--retry",
     type=click.INT,
