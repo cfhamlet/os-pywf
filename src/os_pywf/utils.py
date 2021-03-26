@@ -1,8 +1,21 @@
 import inspect
 import logging
 import types
+from enum import Enum
 from importlib import import_module
 from pkgutil import iter_modules
+
+
+class StrEnum(str, Enum):
+    """Enum where members are also (and must be) string"""
+
+
+class LogLevel(StrEnum):
+    critical = "critical"
+    error = "error"
+    warning = "warning"
+    info = "info"
+    debug = "debug"
 
 
 def init_logging(level):

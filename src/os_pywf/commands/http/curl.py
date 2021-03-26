@@ -2,6 +2,7 @@ import click
 from click_option_group import optgroup
 
 import os_pywf
+from os_pywf.utils import LogLevel, init_logging
 
 from . import cli as main
 
@@ -105,13 +106,22 @@ def callback(task):
     help="Retry times when request fail.",
 )
 @optgroup.option("--parallel", is_flag=True, help="Send requests parallelly.")
+@optgroup.option(
+    "--log-level",
+    default="INFO",
+    show_default=True,
+    type=click.Choice([l.name.upper() for l in LogLevel], case_sensitive=False),
+    help="Log level.",
+)
 @click.argument("urls", nargs=-1)
 @click.pass_context
 def curl(ctx, **kwargs):
     "HTTP client inspired by curl."
-    print(kwargs)
 
     urls = kwargs.pop("urls", ())
     if not urls:
         click.echo(curl.get_help(ctx))
         ctx.exit(0)
+
+    loglevel = kwargs.pop("log_level", "INFO").upper()
+    init_logging(loglevel)
