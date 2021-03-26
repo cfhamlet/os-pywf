@@ -27,24 +27,31 @@ Usage: os-pywf [OPTIONS] COMMAND [ARGS]...
   Command line tool for os-pywf.
 
 Options:
-  --version                      Show the version and exit.
-  --compute-threads INTEGER      Number of compute threads.  [default: 4]
-  --handler-threads INTEGER      Number of handler threads.  [default: 4]
-  --poller-threads INTEGER       Number of poller threads.  [default: 4]
-  --dns-threads INTEGER          Number of dns threads.  [default: 4]
-  --dns-ttl-default INTEGER      Default seconds of dns ttl.  [default: 43200]
-  --dns-ttl-min INTEGER          Min seconds of dns ttl.  [default: 180]
-  --max-connections INTEGER      Max number of connections.  [default: 200]
-  --connection-timeout INTEGER   Connect timeout.  [default: 10000]
-  --response-timeout INTEGER     Response timeout.  [default: 10000]
-  --ssl-connect-timeout INTEGER  SSL connect timeout.  [default: 10000]
-  --help                         Show this message and exit.
+  --version                       Show the version and exit.
+  Workflow:                       Workflow global settings.
+    --compute-threads INTEGER     Number of compute threads.  [default: 4]
+    --handler-threads INTEGER     Number of handler threads.  [default: 4]
+    --poller-threads INTEGER      Number of poller threads.  [default: 4]
+    --dns-threads INTEGER         Number of dns threads.  [default: 4]
+    --dns-ttl-default INTEGER     Default seconds of dns ttl.  [default:
+                                  43200]
+
+    --dns-ttl-min INTEGER         Min seconds of dns ttl.  [default: 180]
+    --max-connections INTEGER     Max number of connections.  [default: 200]
+    --connection-timeout INTEGER  Connect timeout.  [default: 10000]
+    --response-timeout INTEGER    Response timeout.  [default: 10000]
+    --ssl-connect-timeout INTEGER
+                                  SSL connect timeout.  [default: 10000]
+  --help                          Show this message and exit.
 
 Commands:
   http   HTTP tools.
+  mysql  MySQL client.
+  redis  Redis client.
+  run    Run runnable objects of pywf.
 ```
 
-Global settings of Workflow can be specified with options, ENVs is not supported yet.
+Global settings of Workflow can be specified, ENVs is not supported yet.
 
 
 ### Subcommand introductions:
