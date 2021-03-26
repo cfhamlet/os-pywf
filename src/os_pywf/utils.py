@@ -1,7 +1,16 @@
 import inspect
+import logging
 import types
 from importlib import import_module
 from pkgutil import iter_modules
+
+
+def init_logging(level):
+    logging.basicConfig(
+        level=level,
+        format="[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
 
 
 def vars_from_module(module, pass_func=None):
