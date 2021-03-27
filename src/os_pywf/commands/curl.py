@@ -4,14 +4,12 @@ from click_option_group import optgroup
 import os_pywf
 from os_pywf.utils import LogLevel, init_logging
 
-from . import cli as main
-
 
 def callback(task):
     pass
 
 
-@main.command()
+@click.command()
 @optgroup.group("Curl options", help="Options same as curl.")
 @optgroup.option(
     "-0",
@@ -115,7 +113,7 @@ def callback(task):
 )
 @click.argument("urls", nargs=-1)
 @click.pass_context
-def curl(ctx, **kwargs):
+def cli(ctx, **kwargs):
     "HTTP client inspired by curl."
 
     urls = kwargs.pop("urls", ())

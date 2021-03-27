@@ -45,10 +45,13 @@ Options:
   --help                          Show this message and exit.
 
 Commands:
-  http   HTTP tools.
-  mysql  MySQL client.
-  redis  Redis client.
-  run    Run runnable objects of pywf.
+  curl    HTTP client inspired by curl.
+  mysql   MySQL client.
+  proxy   HTTP proxy.
+  redis   Redis client.
+  run     Run runnable objects of pywf.
+  spider  Web spider.
+  web     Web server.
 ```
 
 Global settings of Workflow can be specified, ENVs is not supported yet.
@@ -58,7 +61,7 @@ Global settings of Workflow can be specified, ENVs is not supported yet.
 
 You can get help information of subcommands with ``--help`` option
 
-* ``http curl``
+* ``curl``
     * most options are same as curl, so the command options line can also be used with curl
     * more than one request can be send, just specify multiple URLs
     * additional options which curl not supported:

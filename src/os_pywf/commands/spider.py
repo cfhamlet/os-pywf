@@ -1,7 +1,7 @@
 import click
 
 
-@click.group()
+@click.command()
 @click.pass_context
 def cli(ctx):
-    "HTTP tools."
+    "Web spider."
