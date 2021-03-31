@@ -5,6 +5,19 @@ from enum import Enum
 from importlib import import_module
 from pkgutil import iter_modules
 
+import pywf
+
+
+def kv_from_string(s):
+    c = s.find(":")
+    if c < 0:
+        return (s, "")
+    return (s[:c], s[c + 1 :])
+
+
+def get_error_string(task):
+    return pywf.get_error_string(task.get_state(), task.get_error())
+
 
 class StrEnum(str, Enum):
     """Enum where members are also (and must be) string"""
