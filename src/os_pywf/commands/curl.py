@@ -4,6 +4,7 @@ import logging
 import click
 import pywf
 from click_option_group import optgroup
+from requests.models import DEFAULT_REDIRECT_LIMIT
 
 import os_pywf
 from os_pywf.http.client import HTTP_10, HTTP_11, request
@@ -97,6 +98,13 @@ def cleanup(runner):
     show_default=True,
     help="Maximum data size (in bytes) to download.",
 )
+@optgroup.option(
+    "--max-redirs",
+    type=click.INT,
+    default=DEFAULT_REDIRECT_LIMIT,
+    show_default=True,
+    help="Maximum number of redirects allowed.",
+)
 @optgroup.option("--no-keepalive", is_flag=True, help="Disable keepalive.")
 @optgroup.option(
     "--retry",
@@ -113,13 +121,6 @@ def cleanup(runner):
     help="Time between two retries.",
 )
 @optgroup.option(
-    "--max-redirs",
-    type=click.INT,
-    default=20,
-    show_default=True,
-    help="Maximum number of redirects allowed.",
-)
-@optgroup.option(
     "-X",
     "--request",
     default="GET",
@@ -131,7 +132,6 @@ def cleanup(runner):
     help="Request method.",
 )
 @optgroup.group("Additional options", help="Additional options.")
-@optgroup.option("--debug", is_flag=True, help="Enable debug mode.")
 @optgroup.option(
     "--send-timeout",
     type=click.INT,
@@ -178,10 +178,15 @@ def cleanup(runner):
     type=click.Choice([l.name.upper() for l in LogLevel], case_sensitive=False),
     help="Log level.",
 )
+@optgroup.option("--debug", is_flag=True, help="Enable debug mode.")
 @click.argument("urls", nargs=-1)
 @click.pass_context
 def cli(ctx, **kwargs):
     "HTTP client inspired by curl."
+
+    if not kwargs.get("urls", ()):
+        click.echo(cli.get_help(ctx))
+        ctx.exit(0)
 
     debug = kwargs.get("debug", False)
 
@@ -194,11 +199,6 @@ def cli(ctx, **kwargs):
     for k in ("debug", "log_level"):
         kwargs.pop(k, None)
 
-    urls = kwargs.pop("urls", ())
-    if not urls:
-        click.echo(cli.get_help(ctx))
-        ctx.exit(0)
-
     funcs = dict.fromkeys(("cleanup", "startup", "callback", "errback"))
     for name in funcs:
         if kwargs.get(name, None):
@@ -206,14 +206,14 @@ def cli(ctx, **kwargs):
             funcs[name] = f
 
     runner = None
-    push = None
+    append = None
     parallel = kwargs.pop("parallel", False)
     if parallel:
         runner = pywf.create_parallel_work(funcs["cleanup"])
-        push = runner.add_series
+        append = runner.add_series
     else:
         runner = pywf.create_series_work(pywf.create_empty_task(), funcs["cleanup"])
-        push = runner.push_back
+        append = runner.push_back
 
     timeout = (kwargs.pop("send_timeout", 0), kwargs.pop("receive_timeout", 0))
 
@@ -235,23 +235,26 @@ def cli(ctx, **kwargs):
     retry = kwargs.pop("retry")
     retry_delay = kwargs.pop("retry_delay")
     max_redirs = kwargs.pop("max_redirs")
+    location = kwargs.pop("location")
+    urls = kwargs.pop("urls", ())
     for url in urls:
         o = request(
             url,
             method=method,
             version=version,
             headers=copy.copy(headers),
-            callback=funcs["callback"],
-            errback=funcs["errback"],
             timeout=timeout,
             disable_keepalive=no_keepalive,
-            retry=retry,
+            max_retries=retry,
             retry_delay=retry_delay,
-            max_redirs=max_redirs,
+            allow_redirects=location,
+            max_redirects=max_redirs,
+            callback=funcs["callback"],
+            errback=funcs["errback"],
         )
         if parallel:
             o = pywf.create_series_work(o, None)
-        push(o)
+        append(o)
 
     if funcs["startup"]:
         funcs["startup"](runner)

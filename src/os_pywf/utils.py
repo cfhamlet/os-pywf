@@ -15,8 +15,8 @@ def kv_from_string(s):
     return (s[:c], s[c + 1 :])
 
 
-def get_error_string(task):
-    return pywf.get_error_string(task.get_state(), task.get_error())
+def wf_error_string(state, code):
+    return pywf.get_error_string(state, code)
 
 
 class StrEnum(str, Enum):
