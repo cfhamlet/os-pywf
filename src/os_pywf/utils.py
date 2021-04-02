@@ -42,14 +42,14 @@ def create_timer_task(
     if microseconds <= step:
         return pywf.create_timer_task(microseconds, _wrap_callback)
 
-    flags = {"first": True}
+    flags = {"_first": True}
 
     def _callback(task):
         if cancel and cancel.is_set():
             return
 
-        if flags["first"]:
-            flags["first"] = False
+        if flags["_first"]:
+            flags["_first"] = False
             ud = task.get_user_data()
             task.set_user_data(
                 {"_user_data": ud, "_expire_time": now_ms() + microseconds - step}

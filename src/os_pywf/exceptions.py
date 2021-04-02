@@ -7,4 +7,4 @@ class WFException(Exception):
         self.code = code
 
     def __str__(self):
-        return wf_error_string(self.state, self.code)
+        return {wf_error_string(self.state, self.code)}

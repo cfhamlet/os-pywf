@@ -1,6 +1,7 @@
 import copy
 import logging
 import signal
+import sys
 from threading import Event
 
 import click
@@ -201,6 +202,7 @@ def cli(ctx, **kwargs):
     for k in ("debug", "log_level"):
         kwargs.pop(k, None)
 
+    sys.path.insert(0, ".")
     funcs = dict.fromkeys(("cleanup", "startup", "callback", "errback"))
     for name in funcs:
         if kwargs.get(name, None):
@@ -238,6 +240,7 @@ def cli(ctx, **kwargs):
     retry_delay = kwargs.pop("retry_delay")
     max_redirs = kwargs.pop("max_redirs")
     location = kwargs.pop("location")
+    max_size = kwargs.pop("max_filesize")
     urls = kwargs.pop("urls", ())
 
     cancel = Event()
@@ -256,6 +259,7 @@ def cli(ctx, **kwargs):
             retry_delay=retry_delay,
             allow_redirects=location,
             max_redirects=max_redirs,
+            max_size=max_size,
             callback=funcs["callback"],
             errback=funcs["errback"],
             cancel=cancel,
