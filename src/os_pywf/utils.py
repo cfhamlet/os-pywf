@@ -21,17 +21,18 @@ def create_timer_task(
     microseconds: int,
     callback: Optional[Callable[[pywf.cpp_pyworkflow.TimerTask], None]],
     step: Optional[int] = None,
-    cancel: Optional[Event] = None,  # [TODO] not proper types
+    cancel: Optional[Event] = None,  # [TODO] not proper type
 ) -> pywf.cpp_pyworkflow.TimerTask:
     if cancel is None:
         return pywf.create_timer_task(microseconds, callback)
-    if instance(step, int):
+    if isinstance(step, int):
         if step >= microseconds:
             raise ValueError(
                 f"microseconds({microseconds}) should greater than step({step})"
             )
     else:
         step = MILLION / 3
+    step = int(step)
 
     def _wrap_callback(task):
         if cancel and cancel.is_set():
@@ -41,24 +42,27 @@ def create_timer_task(
     if microseconds <= step:
         return pywf.create_timer_task(microseconds, _wrap_callback)
 
-    first = True
+    flags = {"first": True}
 
     def _callback(task):
         if cancel and cancel.is_set():
             return
-        if first:
+
+        if flags["first"]:
+            flags["first"] = False
             ud = task.get_user_data()
             task.set_user_data(
-                {"_user_data": ud, "_time_stop": now_ms() + microseconds - step}
+                {"_user_data": ud, "_expire_time": now_ms() + microseconds - step}
             )
         ud = task.get_user_data()
-        left = ud["_time_stop"] - now_ms()
+        left = ud["_expire_time"] - now_ms()
         t = None
         if left <= step:
             t = pywf.create_timer_task(left, _wrap_callback)
             t.set_user_data(ud["_user_data"])
         else:
             t = pywf.create_timer_task(step, _callback)
+            t.set_user_data(ud)
 
         series = pywf.series_of(task)
         series << t

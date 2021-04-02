@@ -6,10 +6,10 @@ from requests import Request, Response
 from requests.models import DEFAULT_REDIRECT_LIMIT
 
 from os_pywf.exceptions import WFException
+from os_pywf.utils import MILLION, create_timer_task
 
 HTTP_10 = "HTTP/1.0"
 HTTP_11 = "HTTP/1.1"
-MILLION = 1000000
 
 
 logger = logging.getLogger(__name__)
@@ -38,15 +38,16 @@ def send(
 ):
     timeout = kwargs.get("timeout", None)
     if timeout:
-        if isinstance(timeout, int):
-            timeout = (timeout, 0)
-        elif isinstance(timeout, tuple):
+        if isinstance(timeout, tuple):
             pass
+        elif isinstance(timeout, int):
+            timeout = (timeout, 0)
         else:
             raise ValueError("timeout must be None tuple or int")
     else:
         timeout = (0, 0)
     kwargs["timeout"] = timeout
+    cancel = kwargs.get("cancel", None)
 
     def _callback(task):
         series = pywf.series_of(task)
@@ -62,19 +63,19 @@ def send(
             do = kwargs.get("errback", None)
             retries = udata.get("retries", 0)
             if retries < kwargs.get("max_retries", 0):
-
-                def _retry(t):
-                    s = pywf.series_of(t)
-                    n = send(
-                        request,
-                        **kwargs,
-                    )
-                    n.set_user_data(t.get_user_data())
-                    s << n
-
                 retry_delay = kwargs.get("retry_delay", 0)
                 if retry_delay > 0:
-                    t = pywf.create_timer_task(retry_delay * MILLION, _retry)
+
+                    def _retry(t):
+                        s = pywf.series_of(t)
+                        n = send(
+                            request,
+                            **kwargs,
+                        )
+                        n.set_user_data(t.get_user_data())
+                        s << n
+
+                    t = create_timer_task(retry_delay * MILLION, _retry, cancel=cancel)
                 else:
                     t = send(request, *kwargs)
                 udata["retries"] = retries + 1
@@ -103,18 +104,14 @@ def send(
 
     task = pywf.create_http_task(request.url, 0, 0, _callback)
     task.set_user_data({"request": request})
-    task.set_send_timeout(timeout[0])
-    task.set_receive_timeout(timeout[1])
+    task.set_send_timeout(timeout[0] * MILLION)
+    task.set_receive_timeout(timeout[1] * MILLION)
     task.set_keep_alive(1 if kwargs.get("disable_keepalive", False) else 0)
     req = task.get_req()
     req.set_method(request.method)
     req.set_http_version(kwargs.get("version", HTTP_11))
     for k, v in request.headers.items():
         req.add_header_pair(k, v)
-
-    max_size = kwargs.get("max_size", None)
-    if max_size is not None:
-        req.set_size_limit(max_size)
 
     return task
 

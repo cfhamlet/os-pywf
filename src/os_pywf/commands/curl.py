@@ -1,5 +1,7 @@
 import copy
 import logging
+import signal
+from threading import Event
 
 import click
 import pywf
@@ -209,10 +211,10 @@ def cli(ctx, **kwargs):
     append = None
     parallel = kwargs.pop("parallel", False)
     if parallel:
-        runner = pywf.create_parallel_work(funcs["cleanup"])
+        runner = pywf.create_parallel_work(None)
         append = runner.add_series
     else:
-        runner = pywf.create_series_work(pywf.create_empty_task(), funcs["cleanup"])
+        runner = pywf.create_series_work(pywf.create_empty_task(), None)
         append = runner.push_back
 
     timeout = (kwargs.pop("send_timeout", 0), kwargs.pop("receive_timeout", 0))
@@ -237,6 +239,11 @@ def cli(ctx, **kwargs):
     max_redirs = kwargs.pop("max_redirs")
     location = kwargs.pop("location")
     urls = kwargs.pop("urls", ())
+
+    cancel = Event()
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        signal.signal(sig, lambda x, y: cancel.set())
+
     for url in urls:
         o = request(
             url,
@@ -251,6 +258,7 @@ def cli(ctx, **kwargs):
             max_redirects=max_redirs,
             callback=funcs["callback"],
             errback=funcs["errback"],
+            cancel=cancel,
         )
         if parallel:
             o = pywf.create_series_work(o, None)
@@ -259,5 +267,14 @@ def cli(ctx, **kwargs):
     if funcs["startup"]:
         funcs["startup"](runner)
 
+    def _cleanup(task):
+        if not cancel.is_set():
+            cancel.set()
+        if funcs["cleanup"]:
+            funcs["cleanup"](runner)
+
+    runner.set_callback(_cleanup)
+
     runner.start()
+    cancel.wait()
     pywf.wait_finish()
