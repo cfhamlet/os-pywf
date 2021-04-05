@@ -1,35 +1,48 @@
-import copy
 import logging
 import signal
 import sys
-from threading import Event
+import time
+from typing import Type, Union
 
 import click
 import pywf
+import requests
 from click_option_group import optgroup
 from requests.models import DEFAULT_REDIRECT_LIMIT
 
 import os_pywf
-from os_pywf.http.client import HTTP_10, HTTP_11, request
+from os_pywf.http.client import HTTP_10, HTTP_11, session as make_session
 from os_pywf.utils import LogLevel, init_logging, kv_from_string, load_obj
 
 logger = logging.getLogger(__name__)
 
 
-def callback(task, request, response):
-    pass
+def callback(
+    task: pywf.HttpTask, request: requests.PreparedRequest, response: requests.Response
+):
+    logger.info(f"{request.method} {request.url} {response}")
 
 
-def errback(task, request, failure):
-    pass
+def errback(
+    task: pywf.HttpTask, request: requests.PreparedRequest, failure: Type[Exception]
+):
+    logger.error(f"{request.method} {request.url} {failure}")
 
 
-def startup(runner):
-    pass
+def startup(runner: Union[pywf.SeriesWork, Type[pywf.SubTask]]):
+    ctx = runner.get_context()
+    if ctx is None:
+        runner.set_context({"start_time": time.time()})
+    logger.debug("start")
 
 
-def cleanup(runner):
-    pass
+def cleanup(runner: Union[pywf.SeriesWork, Type[pywf.SubTask]]):
+    ctx = runner.get_context()
+    msg = "finish"
+    if ctx and isinstance(ctx, dict) and "start_time" in ctx:
+        cost = time.time() - ctx["start_time"]
+        msg += f" cost:{cost:.5f}"
+    logger.debug(msg)
 
 
 @click.command()
@@ -243,30 +256,35 @@ def cli(ctx, **kwargs):
     max_size = kwargs.pop("max_filesize")
     urls = kwargs.pop("urls", ())
 
-    cancel = Event()
-    for sig in (signal.SIGTERM, signal.SIGINT):
-        signal.signal(sig, lambda x, y: cancel.set())
+    with make_session(
+        version=version,
+        headers=headers,
+        timeout=timeout,
+        disable_keepalive=no_keepalive,
+        max_retries=retry,
+        retry_delay=retry_delay,
+        allow_redirects=location,
+        max_redirects=max_redirs,
+        max_size=max_size,
+        callback=funcs["callback"],
+        errback=funcs["errback"],
+    ) as session:
 
-    for url in urls:
-        o = request(
-            url,
-            method=method,
-            version=version,
-            headers=copy.copy(headers),
-            timeout=timeout,
-            disable_keepalive=no_keepalive,
-            max_retries=retry,
-            retry_delay=retry_delay,
-            allow_redirects=location,
-            max_redirects=max_redirs,
-            max_size=max_size,
-            callback=funcs["callback"],
-            errback=funcs["errback"],
-            cancel=cancel,
-        )
-        if parallel:
-            o = pywf.create_series_work(o, None)
-        append(o)
+        for url in urls:
+            o = session.request(
+                url,
+                method=method,
+            )
+            if parallel:
+                o = pywf.create_series_work(o, None)
+            append(o)
+
+        def _cancel(signum, frame):
+            logger.debug(f"receive signal {signal.Signals(signum).name}")
+            session.cancel()
+
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            signal.signal(sig, _cancel)
 
     if funcs["startup"]:
         funcs["startup"](runner)
