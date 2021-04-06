@@ -3,14 +3,36 @@ import logging
 import time
 import types
 from enum import Enum
+from http import cookiejar as cookielib
+from http.cookies import SimpleCookie
 from importlib import import_module
 from pkgutil import iter_modules
 from threading import Event
 from typing import Callable, Optional
 
 import pywf
+from requests.cookies import cookiejar_from_dict
 
 MILLION = 1000000
+
+
+def cookiejar_from_string(cookie_string):
+    cookies = SimpleCookie()
+    cookies.load(cookie_string)
+    cj = cookielib.CookieJar()
+    return cookiejar_from_dict(dict([(k, v.value) for k, v in cookies.items()]), cj)
+
+
+def cookiejar_from_file(filename):
+    cj = cookielib.MozillaCookieJar(filename)
+    cj.load(ignore_discard=True)
+    return cj
+
+
+def save_cookiejar(filename, cookiejar):
+    cj = cookielib.MozillaCookieJar()
+    cj.update(cookiejar)
+    cj.save(filename=filename, ignore_discard=True)
 
 
 def now_ms():

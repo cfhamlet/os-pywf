@@ -1,4 +1,5 @@
 import logging
+import os
 import signal
 import sys
 import time
@@ -13,7 +14,15 @@ from requests.models import DEFAULT_REDIRECT_LIMIT
 import os_pywf
 from os_pywf.exceptions import Failure
 from os_pywf.http.client import HTTP_10, HTTP_11, Session
-from os_pywf.utils import LogLevel, init_logging, kv_from_string, load_obj
+from os_pywf.utils import (
+    LogLevel,
+    cookiejar_from_file,
+    cookiejar_from_string,
+    init_logging,
+    kv_from_string,
+    load_obj,
+    save_cookiejar,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +55,12 @@ def cleanup(runner: Union[pywf.SeriesWork, Type[pywf.SubTask]]):
     logger.debug(msg)
 
 
+def load_cookiejar(s: str):
+    if os.path.exists(s) and os.path.isfile(s):
+        return cookiejar_from_file(s)
+    return cookiejar_from_string(s)
+
+
 @click.command()
 @optgroup.group("Curl options", help="Options same as curl.")
 @optgroup.option(
@@ -65,8 +80,8 @@ def cleanup(runner: Union[pywf.SeriesWork, Type[pywf.SubTask]]):
 @optgroup.option(
     "-b",
     "--cookie",
-    default=(None, None),  # issue of click
-    type=(click.File(), str),
+    default=None,
+    type=click.STRING,
     help="String or file to read cookies from.",
 )
 @optgroup.option(
@@ -247,6 +262,12 @@ def cli(ctx, **kwargs):
 
     headers["User-Agent"] = kwargs.pop("user_agent")
 
+    cookiejar = (
+        kwargs.pop("cookie")
+        if kwargs.get("cookie") is None
+        else load_cookiejar(kwargs.pop("cookie"))
+    )
+
     method = kwargs.pop("request")
     version = HTTP_10 if kwargs.pop("http10") else HTTP_11
     no_keepalive = not kwargs.pop("no_keepalive")
@@ -260,6 +281,7 @@ def cli(ctx, **kwargs):
     with Session(
         version=version,
         headers=headers,
+        cookies=cookiejar,
         timeout=timeout,
         disable_keepalive=no_keepalive,
         max_retries=retry,
@@ -299,4 +321,8 @@ def cli(ctx, **kwargs):
             funcs["startup"](runner)
         runner.start()
         session.wait_cancel()
-    pywf.wait_finish()
+        pywf.wait_finish()
+        cookie_file = kwargs.pop("cookie_jar")
+        print(cookie_file, session.cookies)
+        if cookie_file.name and session.cookies:
+            save_cookiejar(cookie_file.name, session.cookies)
