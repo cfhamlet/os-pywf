@@ -93,21 +93,21 @@ def execute(**kwargs):
         default=gs.endpoint_params.connect_timeout,
         show_default=True,
         type=click.INT,
-        help="Connect timeout.",
+        help="Connect timeout(ms).",
     )
     @optgroup.option(
         "--response-timeout",
         default=gs.endpoint_params.response_timeout,
         show_default=True,
         type=click.INT,
-        help="Response timeout.",
+        help="Response timeout(ms).",
     )
     @optgroup.option(
         "--ssl-connect-timeout",
         default=gs.endpoint_params.ssl_connect_timeout,
         show_default=True,
         type=click.INT,
-        help="SSL connect timeout.",
+        help="SSL connect timeout(ms).",
     )
     @click.pass_context
     def cli(ctx, **kgs):

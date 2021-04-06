@@ -65,7 +65,7 @@ def create_timer_task(
             t.set_user_data(ud)
 
         series = pywf.series_of(task)
-        series << t
+        series.push_front(t)
 
     return pywf.create_timer_task(step, _callback)
 

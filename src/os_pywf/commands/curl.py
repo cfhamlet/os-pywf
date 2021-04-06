@@ -11,10 +11,13 @@ from click_option_group import optgroup
 from requests.models import DEFAULT_REDIRECT_LIMIT
 
 import os_pywf
-from os_pywf.http.client import HTTP_10, HTTP_11, session as make_session
+from os_pywf.exceptions import Failure
+from os_pywf.http.client import HTTP_10, HTTP_11, Session
 from os_pywf.utils import LogLevel, init_logging, kv_from_string, load_obj
 
 logger = logging.getLogger(__name__)
+
+pywf_settings = pywf.get_global_settings()
 
 
 def callback(
@@ -23,9 +26,7 @@ def callback(
     logger.info(f"{request.method} {request.url} {response}")
 
 
-def errback(
-    task: pywf.HttpTask, request: requests.PreparedRequest, failure: Type[Exception]
-):
+def errback(task: pywf.HttpTask, request: requests.PreparedRequest, failure: Failure):
     logger.error(f"{request.method} {request.url} {failure}")
 
 
@@ -131,10 +132,10 @@ def cleanup(runner: Union[pywf.SeriesWork, Type[pywf.SubTask]]):
 )
 @optgroup.option(
     "--retry-delay",
-    type=click.INT,
+    type=click.FLOAT,
     default=0,
     show_default=True,
-    help="Time between two retries.",
+    help="Time between two retries(s).",
 )
 @optgroup.option(
     "-X",
@@ -150,17 +151,17 @@ def cleanup(runner: Union[pywf.SeriesWork, Type[pywf.SubTask]]):
 @optgroup.group("Additional options", help="Additional options.")
 @optgroup.option(
     "--send-timeout",
-    type=click.INT,
-    default=0,
+    type=click.FLOAT,
+    default=-1,
     show_default=True,
-    help="Send request timeout.",
+    help="Send request timeout(s).",
 )
 @optgroup.option(
     "--receive-timeout",
-    type=click.INT,
-    default=0,
+    type=click.FLOAT,
+    default=-1,
     show_default=True,
-    help="Receive response timeout.",
+    help="Receive response timeout(s).",
 )
 @optgroup.option(
     "--startup",
@@ -232,7 +233,7 @@ def cli(ctx, **kwargs):
         runner = pywf.create_series_work(pywf.create_empty_task(), None)
         append = runner.push_back
 
-    timeout = (kwargs.pop("send_timeout", 0), kwargs.pop("receive_timeout", 0))
+    timeout = (kwargs.pop("send_timeout", -1), kwargs.pop("receive_timeout", -1))
 
     headers = {}
 
@@ -256,7 +257,7 @@ def cli(ctx, **kwargs):
     max_size = kwargs.pop("max_filesize")
     urls = kwargs.pop("urls", ())
 
-    with make_session(
+    with Session(
         version=version,
         headers=headers,
         timeout=timeout,
@@ -286,17 +287,16 @@ def cli(ctx, **kwargs):
         for sig in (signal.SIGTERM, signal.SIGINT):
             signal.signal(sig, _cancel)
 
-    if funcs["startup"]:
-        funcs["startup"](runner)
+        def _cleanup(task):
+            if session.cancel():
+                cancel.set()
+            if funcs["cleanup"]:
+                funcs["cleanup"](runner)
 
-    def _cleanup(task):
-        if not cancel.is_set():
-            cancel.set()
-        if funcs["cleanup"]:
-            funcs["cleanup"](runner)
+        runner.set_callback(_cleanup)
 
-    runner.set_callback(_cleanup)
-
-    runner.start()
-    cancel.wait()
+        if funcs["startup"]:
+            funcs["startup"](runner)
+        runner.start()
+        session.wait_cancel()
     pywf.wait_finish()
