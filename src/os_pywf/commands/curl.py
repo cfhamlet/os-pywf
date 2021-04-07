@@ -35,7 +35,10 @@ pywf_settings = pywf.get_global_settings()
 def callback(
     task: pywf.HttpTask, request: requests.PreparedRequest, response: requests.Response
 ):
-    logger.info(f"{request.method} {request.url} {response}")
+    logf = logger.info
+    if isinstance(response, Failure):
+        logf = logger.error
+    logf(f"{request.method} {request.url} {response}")
 
 
 def errback(task: pywf.HttpTask, request: requests.PreparedRequest, failure: Failure):
@@ -206,9 +209,9 @@ def load_cookiejar(s: str):
 )
 @optgroup.option(
     "--errback",
-    default=f"{errback.__module__}.{errback.__name__}",
+    default=None,
     show_default=True,
-    help="Function invoked when request fail.",
+    help="Function invoked when request fail (callback will be invoked when no errback).",
 )
 @optgroup.option("--parallel", is_flag=True, help="Send requests parallelly.")
 @optgroup.option(

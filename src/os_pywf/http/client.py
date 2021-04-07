@@ -328,6 +328,8 @@ class Session(object):
             if isinstance(response, Failure):  # [TODO] ignore specified exceptions
                 response.value.elapsed = timedelta(seconds=elapsed)
                 do = kwargs.get("errback", self.errback)
+                if do is None:
+                    do = kwargs.get("callback", self.callback)
                 retries = udata.get("_retries", 1)
                 if retries < kwargs.get("max_retries", self.max_retries):
                     self.retry(task, request, **kwargs)
@@ -354,6 +356,8 @@ class Session(object):
                         do = None
                     else:
                         do = kwargs.get("errback", self.errback)
+                        if do is None:
+                            do = kwargs.get("callback", self.callback)
                         response = Failure(
                             TooManyRedirects(
                                 "exceeded {} redirects".format(max_redirects),
