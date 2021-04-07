@@ -1,3 +1,5 @@
+import copy
+import email
 import inspect
 import logging
 import time
@@ -11,7 +13,7 @@ from threading import Event
 from typing import Callable, Optional
 
 import pywf
-from requests.cookies import cookiejar_from_dict
+from requests.cookies import MockRequest, MockResponse, cookiejar_from_dict
 
 MILLION = 1000000
 
@@ -29,10 +31,20 @@ def cookiejar_from_file(filename):
     return cj
 
 
-def save_cookiejar(filename, cookiejar):
+def save_cookiejar(filename: str, cookiejar):
     cj = cookielib.MozillaCookieJar()
-    cj.update(cookiejar)
+    for cookie in cookiejar:
+        cj.set_cookie(copy.copy(cookie))
     cj.save(filename=filename, ignore_discard=True)
+
+
+def extract_cookies_to_jar(jar, request, response):
+    msg = email.message_from_string(
+        "\r\n".join([f"{k}: {v}" for k, v in response.headers.items()])
+    )
+    req = MockRequest(request)
+    res = MockResponse(msg)
+    jar.extract_cookies(res, req)
 
 
 def now_ms():

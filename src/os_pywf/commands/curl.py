@@ -322,7 +322,7 @@ def cli(ctx, **kwargs):
         runner.start()
         session.wait_cancel()
         pywf.wait_finish()
+
         cookie_file = kwargs.pop("cookie_jar")
-        print(cookie_file, session.cookies)
-        if cookie_file.name and session.cookies:
+        if cookie_file and session.cookies:
             save_cookiejar(cookie_file.name, session.cookies)

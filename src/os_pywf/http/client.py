@@ -15,7 +15,6 @@ from requests.cookies import (
     MockResponse,
     RequestsCookieJar,
     cookiejar_from_dict,
-    extract_cookies_to_jar,
     merge_cookies,
 )
 from requests.exceptions import (
@@ -37,7 +36,7 @@ from requests.utils import get_encoding_from_headers, requote_uri, rewind_body
 
 import os_pywf
 from os_pywf.exceptions import Failure, WFException
-from os_pywf.utils import MILLION, create_timer_task
+from os_pywf.utils import MILLION, create_timer_task, extract_cookies_to_jar
 
 HTTP_10 = "HTTP/1.0"
 HTTP_11 = "HTTP/1.1"
@@ -285,7 +284,7 @@ class Session(object):
         headers = prepared_request.headers
         headers.pop("Cookie", None)
 
-        extract_cookies_to_jar(prepared_request._cookies, request, response.raw)
+        extract_cookies_to_jar(prepared_request._cookies, request, response)
         merge_cookies(prepared_request._cookies, self.cookies)
         prepared_request.prepare_cookies(prepared_request._cookies)
         session_redirect_mixin.rebuild_auth(prepared_request, response)
@@ -338,9 +337,9 @@ class Session(object):
                 response = dispatch_hook("response", request.hooks, response, **kwargs)
                 if response.history:
                     for resp in response.history:
-                        extract_cookies_to_jar(self.cookies, resp.request, resp.raw)
+                        extract_cookies_to_jar(self.cookies, resp.request, resp)
 
-                extract_cookies_to_jar(self.cookies, request, response.raw)
+                extract_cookies_to_jar(self.cookies, request, response)
                 history = udata.get("_history", [])
                 udata["_history"] = history
                 if not response.is_redirect:
