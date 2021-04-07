@@ -7,7 +7,7 @@
 
 [Workflow](https://github.com/sogou/workflow) and [PyWorkflow](https://github.com/sogou/pyworkflow)(Python binding of Workflow) are great async frameworks.
 
-This project is tryig to explore the power of Workflow. We provide high level APIs and command line tools for convenient.
+This project is trying to explore the power of the framework and provide command line tools and high level APIs for convenient.
 
 ## Install
 
@@ -18,7 +18,9 @@ pip install os-pywf
 
 ## Command line
 
-``os-pywf`` command can be used after installation.
+``os-pywf`` command can be used after installation. There are several command line tools can be used. You can get help information of subcommands with ``--help`` option.  Global settings of Workflow can be specified, ENVs is not supported yet.
+
+The commands with *planning* tag will be developed later, can not be used right now.
 
 ```
 $ os-pywf
@@ -38,41 +40,36 @@ Options:
 
     --dns-ttl-min INTEGER         Min seconds of dns ttl.  [default: 180]
     --max-connections INTEGER     Max number of connections.  [default: 200]
-    --connection-timeout INTEGER  Connect timeout.  [default: 10000]
-    --response-timeout INTEGER    Response timeout.  [default: 10000]
+    --connection-timeout INTEGER  Connect timeout(ms).  [default: 10000]
+    --response-timeout INTEGER    Response timeout(ms).  [default: 10000]
     --ssl-connect-timeout INTEGER
-                                  SSL connect timeout.  [default: 10000]
+                                  SSL connect timeout(ms).  [default: 10000]
   --help                          Show this message and exit.
 
 Commands:
   curl    HTTP client inspired by curl.
-  mysql   MySQL client.
-  proxy   HTTP proxy.
-  redis   Redis client.
-  run     Run runnable objects of pywf.
-  spider  Web spider.
-  web     Web server.
+  mysql   MySQL client (planning).
+  proxy   HTTP proxy (planning).
+  redis   Redis client (planning).
+  run     Run runnable objects of pywf (planning).
+  spider  Web spider (planning).
+  web     Web server (planning).
 ```
 
-Global settings of Workflow can be specified, ENVs is not supported yet.
 
 
-### Subcommand introductions:
+### curl
 
-You can get help information of subcommands with ``--help`` option
+This sub-command is inspired by curl. It works as curl and provides more powerful features especially invoke Python function as response process callback from command line, which make this command flexible and easy to use.
 
-* ``curl``
-    * most options are same as curl, so the command options line can also be used with curl
-    * more than one request can be send, just specify multiple URLs
-    * additional options which curl not supported:
-        * ``--callback``, once set to an importable python function path, the function will be invoked when response arrived or request fail
-        * ``--retry``, retry times when request fail
-        * ``--parallel``, send requests parallelly
+The command provides two types of options, curl options and additional options.
 
 
 ## APIs
 
-[TODO]
+### os_pywf.http.client
+
+
 
 ## Unit Tests
 
