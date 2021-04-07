@@ -396,6 +396,8 @@ class Session(object):
         )
         req = task.get_req()
         req.set_method(request.method)
+        if request.body:
+            req.append_body(request.body)
         req.set_http_version(kwargs.get("version", self.version))
         for k, v in request.headers.items():
             req.add_header_pair(k, v)

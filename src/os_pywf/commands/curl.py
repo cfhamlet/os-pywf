@@ -10,12 +10,14 @@ import pywf
 import requests
 from click_option_group import optgroup
 from requests.models import DEFAULT_REDIRECT_LIMIT
+from requests.structures import CaseInsensitiveDict
 
 import os_pywf
 from os_pywf.exceptions import Failure
 from os_pywf.http.client import HTTP_10, HTTP_11, Session
 from os_pywf.utils import (
     LogLevel,
+    bytes_from_data,
     cookiejar_from_file,
     cookiejar_from_string,
     init_logging,
@@ -155,13 +157,12 @@ def load_cookiejar(s: str):
 @optgroup.option(
     "-X",
     "--request",
-    default="GET",
-    show_default=True,
+    default=None,
     type=click.Choice(
         ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"],
         case_sensitive=False,
     ),
-    help="Request method.",
+    help="Request method. [default: GET]",
 )
 @optgroup.group("Additional options", help="Additional options.")
 @optgroup.option(
@@ -250,7 +251,7 @@ def cli(ctx, **kwargs):
 
     timeout = (kwargs.pop("send_timeout", -1), kwargs.pop("receive_timeout", -1))
 
-    headers = {}
+    headers = CaseInsensitiveDict()
 
     for kv in kwargs.pop("header"):
         k, v = kv_from_string(kv)
@@ -268,7 +269,6 @@ def cli(ctx, **kwargs):
         else load_cookiejar(kwargs.pop("cookie"))
     )
 
-    method = kwargs.pop("request")
     version = HTTP_10 if kwargs.pop("http10") else HTTP_11
     no_keepalive = not kwargs.pop("no_keepalive")
     retry = kwargs.pop("retry")
@@ -277,6 +277,25 @@ def cli(ctx, **kwargs):
     location = kwargs.pop("location")
     max_size = kwargs.pop("max_filesize")
     urls = kwargs.pop("urls", ())
+
+    method = kwargs.pop("request")
+    data = kwargs.pop("data")
+    if data is not None:
+        data = b"&".join([bytes_from_data(d) for d in data])
+
+    data_ed = kwargs.pop("data_urlencode")
+    if data_ed is not None:
+        o = b"&".join([bytes_from_data(d, True) for d in data_ed])
+        if data is not None:
+            data = b"&".join((data, o))
+        else:
+            data = o
+
+    if data is not None:
+        if method is None:
+            method = "POST"
+        if "content-type" not in headers:
+            headers["content-type"] = "application/x-www-form-urlencoded"
 
     with Session(
         version=version,
@@ -296,6 +315,7 @@ def cli(ctx, **kwargs):
         for url in urls:
             o = session.request(
                 url,
+                data=data,
                 method=method,
             )
             if parallel:

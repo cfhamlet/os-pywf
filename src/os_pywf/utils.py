@@ -2,8 +2,10 @@ import copy
 import email
 import inspect
 import logging
+import os
 import time
 import types
+import urllib
 from enum import Enum
 from http import cookiejar as cookielib
 from http.cookies import SimpleCookie
@@ -16,6 +18,22 @@ import pywf
 from requests.cookies import MockRequest, MockResponse, cookiejar_from_dict
 
 MILLION = 1000000
+
+
+def bytes_from_data(data, urlencode=False):
+    if isinstance(data, bytes):
+        pass
+    elif isinstance(data, str):
+        if data.startswith("@"):
+            fn = data[1:]
+            if os.path.exists(fn) and os.path.isfile(fn):
+                with open(fn, "rb") as f:
+                    data = f.read()
+        else:
+            data = data.encode("utf8")
+    if urlencode:
+        data = urllib.parse.quote_from_bytes(data).encode("utf8")
+    return data
 
 
 def cookiejar_from_string(cookie_string):
@@ -108,7 +126,7 @@ def kv_from_string(s):
     c = s.find(":")
     if c < 0:
         return (s, "")
-    return (s[:c], s[c + 1 :])
+    return (s[:c].strip(), s[c + 1 :].strip())
 
 
 def wf_error_string(state, code):
