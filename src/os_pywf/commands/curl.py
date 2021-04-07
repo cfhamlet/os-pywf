@@ -311,6 +311,8 @@ def cli(ctx, **kwargs):
         if isinstance(data, bytes):
             raise RuntimeError("You can only select one HTTP request!")
         forms = [formparam_from_string(s) for s in forms]
+        if method is None:
+            method = "POST"
 
     auth = kwargs.pop("user")
     if auth is not None:
