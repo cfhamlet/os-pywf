@@ -20,6 +20,7 @@ from os_pywf.utils import (
     bytes_from_data,
     cookiejar_from_file,
     cookiejar_from_string,
+    formparam_from_string,
     init_logging,
     kv_from_string,
     load_obj,
@@ -111,6 +112,7 @@ def load_cookiejar(s: str):
 @optgroup.option(
     "-F",
     "--form",
+    multiple=True,
     help="Specify HTTP multipart POST data.",
 )
 @optgroup.option(
@@ -138,6 +140,11 @@ def load_cookiejar(s: str):
     default=DEFAULT_REDIRECT_LIMIT,
     show_default=True,
     help="Maximum number of redirects allowed.",
+)
+@optgroup.option(
+    "-u",
+    "--user",
+    help="Specify the user name and password to use  for  server  authentication.",
 )
 @optgroup.option("--no-keepalive", is_flag=True, help="Disable keepalive.")
 @optgroup.option(
@@ -280,26 +287,38 @@ def cli(ctx, **kwargs):
 
     method = kwargs.pop("request")
     data = kwargs.pop("data")
-    if data is not None:
+    if data:
         data = b"&".join([bytes_from_data(d) for d in data])
 
     data_ed = kwargs.pop("data_urlencode")
-    if data_ed is not None:
+    if data_ed:
         o = b"&".join([bytes_from_data(d, True) for d in data_ed])
-        if data is not None:
+        if isinstance(data, bytes):
             data = b"&".join((data, o))
         else:
             data = o
-
-    if data is not None:
+    if isinstance(data, bytes):
         if method is None:
             method = "POST"
         if "content-type" not in headers:
             headers["content-type"] = "application/x-www-form-urlencoded"
 
+    forms = kwargs.pop("form")
+    if forms:
+        if isinstance(data, bytes):
+            raise RuntimeError("You can only select one HTTP request!")
+        forms = [formparam_from_string(s) for s in forms]
+
+    auth = kwargs.pop("user")
+    if auth is not None:
+        auth = tuple(auth.split(":", 1))
+        if len(auth) == 1:
+            auth = (auth[0], "")  # [TODO] prompt for password
+
     with Session(
         version=version,
         headers=headers,
+        auth=auth,
         cookies=cookiejar,
         timeout=timeout,
         disable_keepalive=no_keepalive,
@@ -316,7 +335,8 @@ def cli(ctx, **kwargs):
             o = session.request(
                 url,
                 data=data,
-                method=method,
+                files=forms,
+                method=method if method is not None else "GET",
             )
             if parallel:
                 o = pywf.create_series_work(o, None)

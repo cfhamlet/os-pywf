@@ -20,6 +20,41 @@ from requests.cookies import MockRequest, MockResponse, cookiejar_from_dict
 MILLION = 1000000
 
 
+def formparam_from_string(s):
+    t = s.find("=")
+    if t <= 0:
+        raise ValueError(f"invalid string {s}")
+    name = s[:t]
+    s = s[t + 1 :]
+    if not s.startswith("@"):
+        return (name, (None, s))
+
+    t = s.find(";")
+    fn = s[1:]
+    if t > 0:
+        fn = s[1:t].strip()
+        s = s[t + 1 :].strip()
+    else:
+        s = ""
+    params = [None] * 3
+    if os.path.exists(fn) and os.path.isfile(fn):
+        with open(fn, "rb") as f:
+            params[1] = f.read()
+    if s:
+        for kv in s.split(";"):
+            p = kv.split("=", 1)
+            if len(p) == 1:
+                p = [p[0], ""]
+            k = p[0].lower()
+            v = p[1]
+            if k == "type":
+                params[2] = v.strip()
+            elif k == "filename":
+                params[0] = v.strip()
+
+    return (name, tuple(params))
+
+
 def bytes_from_data(data, urlencode=False):
     if isinstance(data, bytes):
         pass
