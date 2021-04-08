@@ -1,0 +1,10 @@
+[run]
+parallel = true
+branch = true
+source = os_pywf
+
+[paths]
+source =
+    src/os_pywf
+    .tox/*/lib/python*/site-packages/os_pywf
+    .tox/*/site-packages/os_pywf
