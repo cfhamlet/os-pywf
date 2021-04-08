@@ -78,9 +78,7 @@ Features:
 Issues/Not support:
 
 * Configure proxy
-
 * Use your own cert
-
 * Ctrl+C to quit program slowly when downloading slow response
 
   
