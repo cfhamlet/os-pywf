@@ -120,7 +120,7 @@ The command provides two types of options, **curl options** and **additional opt
     os-pywf curl http://www.example.com/ --startup app.startup --cleanup app.cleanup
     ```
 
-* ``--callback``, a function invoked when response received. 
+* ``--callback``, a function invoked when response received
   
     We wrap PyWorkflow with most famous Python HTTP library [Requests](https://github.com/psf/requests) and provide more powerful callback. The callback function have three parameters: task, request and response.
     
