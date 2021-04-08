@@ -16,9 +16,9 @@ pip install os-pywf
 ```
 
 
-## Command line
+## Commands
 
-``os-pywf`` command can be used after installation. There are several subcommands can be used. You can get help information of subcommands with ``--help`` option.  Global settings of Workflow can be specified, ENVs is not supported yet.
+``os-pywf`` command can be used after installation. You can get help information with ``--help`` option.  Global settings of Workflow can be specified, ENVs is not supported yet.
 
 The subcommands with *planning* tag will be developed later, can not be used right now.
 
@@ -60,32 +60,32 @@ Commands:
 
 ### curl
 
-This subcommand is inspired by curl. It works as curl and provides more useful features especially invoke Python function as response callback, which make it flexible and easy to use.
+This subcommand is inspired by curl. It works as curl and provides more useful features especially invoke Python function as response callback, which make it flexible and easy to extend.
 
 Features:
 
-* Same options as curl, can be used by curl directly
-* Support HTTP version 1.0/1.1
-* Auto manipulate cookies. Cookies can be spicified by command line or read from file. Cookies can be saved to file.
+* Same options as curl, command line can be used by curl directly
+* Support HTTP version 1.0/1.1 
+* Auto manipulate cookies. Cookies can be specified by command line or read from file. Cookies can be saved to file
 * Support post urlencode data
 * Support upload files as multipart form
-* Support redirect and response history saved in response.history
-* Support retry and retry interval.  The program can be quickly cancelled when retrying
-* All requests can be send parallelly
+* Support redirect. Response history can be accessed with [response.history](https://docs.python-requests.org/en/master/api/#requests.Response.history)
+* Support retry and retry interval.  The program can be quickly canceled when retrying
+* All requests can be send parallelly (async not multithread)
 * Custom startup/cleanup/callback/errback function as plugins
-* Callback with request and response parameters of the most famous [requests](https://github.com/psf/requests) library
+* Callback with request and response parameters of the most famous [Requests](https://github.com/psf/requests) library
 
-Not support yet:
+Issues/Not support:
 
 * Configure proxy
 
 * Use your own cert
 
-* Ctrl+C quit program quickly when slow response
+* Ctrl+C to quit program slowly when downloading slow response
 
   
 
-The command provides two types of options, **curl options** and **additional options**. Run ``os-pywf curl --help`` to get the full options.
+The command provides two types of options, **curl options** and **additional options**. Run ``os-pywf curl --help`` to get the full help information.
 
 **curl options** are same as the options of curl.  Usage can be found on man page of curl and help descriptions.
 
@@ -97,7 +97,7 @@ The command provides two types of options, **curl options** and **additional opt
 
 * ``--startup``, a function invoked when startup, before download pages. The function have only one parameter which is the series or the parallel of Workflow
 
-* ``--cleanup``, a function invoked when cleanup, after all downdloads finish. The function have only one parameter same as startup function
+* ``--cleanup``, a function invoked when cleanup, after all downloads finish. The function have only one parameter same as startup function
   
     ```
     # app.py
@@ -114,7 +114,7 @@ The command provides two types of options, **curl options** and **additional opt
 
 * ``--callback``, a function invoked when response received. 
   
-    We wrap PyWorkflow with most famous Python http library [requests](https://github.com/psf/requests) and provide more powerful callback. The callback function have three parameters: task, request and response.
+    We wrap PyWorkflow with most famous Python HTTP library [Requests](https://github.com/psf/requests) and provide more powerful callback. The callback function have three parameters: task, request and response.
     
     ```
     # app.py
@@ -126,9 +126,9 @@ The command provides two types of options, **curl options** and **additional opt
     os-pywf curl http://www.example.com/ --callback app.callback
     ```
     
-    * task, the PyWorkflow httptask object
-    * request,  [requests.PreparedRequest](https://docs.python-requests.org/en/master/api/#requests.PreparedRequest) object, it is the original request even though there are retries and redirects
-    * response, [requests.Response](https://docs.python-requests.org/en/master/api/#requests.Response) object, it is the final response when there are retries and redirects.  You can get all the response when redirect occur. If not configure errback function, the response will be ``os_pywf.exceptions.Failure`` object when transaction fail (all http response treat as success)
+    * **task**, the PyWorkflow HttpTask object
+    * **request**,  [requests.PreparedRequest](https://docs.python-requests.org/en/master/api/#requests.PreparedRequest) object, it is the original request even though there are retries and redirects
+    * **response**, [requests.Response](https://docs.python-requests.org/en/master/api/#requests.Response) object, it is the final response when there are retries and redirects.  You can get all the response when redirect occur. If not configure errback function, the response will be ``os_pywf.exceptions.Failure`` object when transaction fail (all HTTP response treat as success)
 
 * ``--errback``, a function invoked when request fail. It can be ignored, all of the response and fail will invoke callback function. When provide, transaction fail will invoke this function not callback function
 
@@ -142,17 +142,111 @@ The command provides two types of options, **curl options** and **additional opt
     os-pywf curl http://www.example.com/ --errback app.errback
     ```
 
-    * task, the PyWorkflow httptask object
-    * request, same as the parameter of callback
-    * Failure, ``os_pywf.exceptions.Failure`` object, it has two properties: exception and value. The value property maybe None or requests.Response depends on the fail situation
+    * **task**, the PyWorkflow HttpTask object
+    * **request**, same as the parameter of callback
+    * **failure**, ``os_pywf.exceptions.Failure`` object, it has two properties: exception and value. The value property maybe None or [requests.Response](https://docs.python-requests.org/en/master/api/#requests.Response) depends on the fail situation
     
-* ``--parallel``,  requests will be send parallelly. Attention, the framework is asynchronous, all callback/errback invoked in one thread. Block operations in one callback/errback will block the whole world
+* ``--parallel``,  requests will be send parallelly. Attention, the framework is asynchronous, all callback/errback invoked in one thread. Block operations in callback/errback will block the whole world
 
 ## APIs
 
 ### os_pywf.http.client
 
+This module provides hight level HTTP client APIs. Inspired by the most famous Python HTTP library [Requests](https://github.com/psf/requests), the APIs are nearly the same.
 
+All of the request APIs do not send request and block wait response, they all return HttpTask object for Workflow and invoke callback function when response downloaded.
+
+We wrap the PyWorkflow HttpTask and provide more convenient callback with [request](https://docs.python-requests.org/en/master/api/#requests.PreparedRequest) and [response](https://docs.python-requests.org/en/master/api/#requests.Response) as additional parameters, they all typical instance of Requests library as you know.
+
+```
+import pywf
+from os_pywf.http import client
+
+def callback(task, request, response):
+    print(request, response)
+
+task = client.get("http://www.example.com/", callback=callback)
+task.start()
+pywf.wait_finish()
+```
+
+We provide more useful features which PyWorkflow not support directly:
+
+* session with cookies persistence
+* redirect responses history
+* retry interval and quick cancel
+* authentication
+* post urlencode data and multipart files upload
+
+You can use Session to configure same settings of  a group tasks, it also auto manipulate cookies and provide cancel function to cancel all tasks create from same session. You can create Session as normal class or as a context manager:
+
+```
+import pywf
+from os_pywf.http import client
+
+def callback(task, request, response):
+    print(request, response)
+    
+series = pywf.create_series_work(pywf.create_empty_task(), None)
+
+headers = {"User-Agent": "os-pywf/beta"}
+with client.Session(headers=headers, callback=callback) as session:
+    for url in ["http://www.example.com/", "http://www.google.com/"]:
+        task = session.get(url)
+        series.push_back(task)
+    
+series.start()
+pywf.wait_finish()
+```
+
+Session can be canceled, when canceled the tasks created by the session which not started  will be destroyed, running task will still run until finish but callback will not invoked. 
+
+```
+...
+# register cancel for Ctrl+C 
+with client.Session() as session:
+    def _cancel(signum, frame):    
+        session.cancel()
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        signal.signal(sig, _cancel)
+...
+```
+
+
+
+For callback async type of Workflow, we provide two functions as request/session parameters for framework: callback and errback
+
+* **callback**, invoked when response received,  three parameters: task, request, response
+  
+    ```
+    def callback(task, request, response):
+        pass
+    ```
+    * **task**, the PyWorkflow HttpTask object
+    * **request**,  [requests.PreparedRequest](https://docs.python-requests.org/en/master/api/#requests.PreparedRequest) object, it is the original request even though there are retries and redirects
+    * **response**, [requests.Response](https://docs.python-requests.org/en/master/api/#requests.Response) object, it is the final response when there are retries and redirects.  You can get all the response when redirect occur. If not set errback function, the response will be ``os_pywf.exceptions.Failure`` object when transaction fail (all HTTP response treat as success)
+    
+* **errback**, invoked when transaction fail. It can be ignored, all of the response and fail will invoke callback function, three parameters: task, request, failure
+
+    ```
+    def errback(task, request, failure):
+        pass
+    ```
+    
+    * **task**, the PyWorkflow HttpTask object
+    * **request**, same as the parameter of callback
+    * **Failure**, ``os_pywf.exceptions.Failure`` object, it has two properties: exception and value. The value property maybe None or [requests.Response](https://docs.python-requests.org/en/master/api/#requests.Response) depends on the fail situation
+
+### os_pywf.utils
+
+* **create_timer_task**, wrap the create_timer_task of PyWorkflow. It split the wait time into small time pieces, so it can be canceled as soon as possible.
+
+  You can pass a threading.Event object as cancel parameter.
+
+### os_pywf.exceptions
+
+* **Failure**, failure for usually for errback, two properties: exception and value. The real value object depend on fail situation
+* **WFException**, exception about task fail,  two properties: state and code. state come from ``task.get_state()``, code come from ``task.get_error()``. You can get human readable error string by  use built-in str function.
 
 ## Unit Tests
 
