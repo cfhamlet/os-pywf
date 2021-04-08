@@ -134,14 +134,14 @@ class Session(object):
         self.errback = errback
 
     def cancel(self):
-        if not self.cancelled():
+        if not self.canceled():
             self.cancel_event.set()
 
-    def cancelled(self):
+    def canceled(self):
         return self.cancel_event.is_set()
 
     def wait_cancel(self):
-        if not self.cancelled():
+        if not self.canceled():
             self.cancel_event.wait()
 
     def prepare_request(self, request: Request) -> PreparedRequest:
@@ -297,7 +297,7 @@ class Session(object):
         extras = {"_start": preferred_clock()}
 
         def _callback(task):
-            if self.cancelled():
+            if self.canceled():
                 series = pywf.series_of(task)
                 if not series.is_canceled():
                     series.cancel()
