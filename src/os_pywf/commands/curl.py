@@ -225,7 +225,7 @@ def load_cookiejar(s: str):
 @click.argument("urls", nargs=-1)
 @click.pass_context
 def cli(ctx, **kwargs):
-    "HTTP client inspired by curl."
+    "HTTP client inspired by curl (beta)."
 
     if not kwargs.get("urls", ()):
         click.echo(cli.get_help(ctx))
