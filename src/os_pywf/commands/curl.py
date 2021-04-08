@@ -20,6 +20,7 @@ from os_pywf.utils import (
     bytes_from_data,
     cookiejar_from_file,
     cookiejar_from_string,
+    create_series_work,
     formparam_from_string,
     init_logging,
     kv_from_string,
@@ -256,7 +257,7 @@ def cli(ctx, **kwargs):
         runner = pywf.create_parallel_work(None)
         append = runner.add_series
     else:
-        runner = pywf.create_series_work(pywf.create_empty_task(), None)
+        runner = create_series_work()
         append = runner.push_back
 
     timeout = (kwargs.pop("send_timeout", -1), kwargs.pop("receive_timeout", -1))

@@ -104,6 +104,12 @@ def now_ms():
     return int(time.time() * MILLION)
 
 
+def create_series_work(task=None, callback=None):
+    return pywf.create_series_work(
+        pywf.create_empty_task() if task is None else task, callback
+    )
+
+
 def create_timer_task(
     microseconds: int,
     callback: Optional[Callable[[pywf.cpp_pyworkflow.TimerTask], None]],
