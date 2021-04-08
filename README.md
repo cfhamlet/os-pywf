@@ -143,6 +143,7 @@ Features:
 * Support upload files as multipart form
 * Support redirect. Response history can be accessed with [response.history](https://docs.python-requests.org/en/master/api/#requests.Response.history)
 * Support retry and retry interval.  The program can be quickly canceled when retrying
+* Support auto decompress response data
 * All requests can be send parallelly (async not multithread)
 * Custom startup/cleanup/callback/errback function as plugins
 * Callback with request and response parameters of the most famous [Requests](https://github.com/psf/requests) library
@@ -246,6 +247,7 @@ We provide more useful features which PyWorkflow not support directly:
 * redirect responses history
 * retry interval and quick cancel
 * authentication
+* auto decompress response data
 * post urlencode data and multipart files upload
 
 You can use Session to configure same settings of  a group tasks, it also auto manipulate cookies and provide cancel function to cancel all tasks create by the same session. You can create Session as normal class or as a context manager:
