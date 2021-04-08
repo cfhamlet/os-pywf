@@ -247,9 +247,12 @@ For callback async type of Workflow, we provide two functions as request/session
 
 ### os_pywf.utils
 
+* **create_series_work**, wrap the create_series_work of PyWorkflow, do not need a task as first parameter.
+
 * **create_timer_task**, wrap the create_timer_task of PyWorkflow. It split the wait time into small time pieces, so it can be canceled as soon as possible.
 
   You can pass a threading.Event object as cancel parameter.
+
 
 ### os_pywf.exceptions
 
