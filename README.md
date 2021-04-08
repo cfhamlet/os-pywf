@@ -62,6 +62,16 @@ Commands:
 
 This subcommand is inspired by curl. It works as curl and provides more useful features especially invoke Python function as response callback, which make it flexible and easy to extend.
 
+```
+# app.py
+def callback(task, request, response):
+    print(request, response)
+```
+
+```
+os-pywf curl http://www.example.com/ --callback app.callback
+```
+
 Features:
 
 * Same options as curl, command line can be used by curl directly
