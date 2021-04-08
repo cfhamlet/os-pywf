@@ -47,7 +47,7 @@ Options:
   --help                          Show this message and exit.
 
 Commands:
-  curl    HTTP client inspired by curl.
+  curl    HTTP client inspired by curl (beta).
   mysql   MySQL client (planning).
   proxy   HTTP proxy (planning).
   redis   Redis client (planning).
