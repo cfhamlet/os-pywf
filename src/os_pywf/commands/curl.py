@@ -345,7 +345,7 @@ def cli(ctx, **kwargs):
                 method=method if method is not None else "GET",
             )
             if parallel:
-                o = pywf.create_series_work(o, None)
+                o = create_series_work(o)
             append(o)
 
         def _cancel(signum, frame):
