@@ -23,7 +23,7 @@ pip install os-pywf
 The subcommands with *planning* tag will be developed later, can not be used right now.
 
 ```
-$ os-pywf
+$ os-pywf --help
 Usage: os-pywf [OPTIONS] COMMAND [ARGS]...
 
   Command line tool for os-pywf.
@@ -63,6 +63,66 @@ Commands:
 This subcommand is inspired by curl. It works as curl and provides more useful features especially invoke Python function as response callback, which make it flexible and easy to extend.
 
 ```
+$ os-pywf curl --help
+Usage: os-pywf curl [OPTIONS] [URLS]...
+
+  HTTP client inspired by curl (beta).
+
+Options:
+  Curl options:                   Options same as curl.
+    -0, --http1.0                 Use HTTP 1.0
+    -A, --user-agent TEXT         User-Agent to send to server.  [default: os-
+                                  pywf/0.0.1]
+
+    -b, --cookie TEXT             String or file to read cookies from.
+    -c, --cookie-jar FILENAME     Write cookies to this file after operation.
+    -d, --data TEXT               HTTP POST data.
+    --data-urlencode TEXT         HTTP POST data url encoded.
+    -e, --referer TEXT            Referer URL.
+    -F, --form TEXT               Specify HTTP multipart POST data.
+    -H, --header TEXT             Custom header to pass to server.
+    -L, --location                Follow redirects.
+    --max-filesize INTEGER        Maximum data size (in bytes) to download.
+    --max-redirs INTEGER          Maximum number of redirects allowed.
+                                  [default: 30]
+
+    -u, --user TEXT               Specify the user name and password to use
+                                  for  server  authentication.
+
+    --no-keepalive                Disable keepalive.
+    --retry INTEGER               Maximum retries when request fail.
+                                  [default: 0]
+
+    --retry-delay FLOAT           Time between two retries(s).  [default: 0]
+    -X, --request [DELETE|GET|HEAD|OPTIONS|PATCH|POST|PUT]
+                                  Request method. [default: GET]
+  Additional options:             Additional options.
+    --send-timeout FLOAT          Send request timeout(s).  [default: -1]
+    --receive-timeout FLOAT       Receive response timeout(s).  [default: -1]
+    --startup TEXT                Function invoked when startup.  [default:
+                                  os_pywf.commands.curl.startup]
+
+    --cleanup TEXT                Function invoked when cleanup.  [default:
+                                  os_pywf.commands.curl.cleanup]
+
+    --callback TEXT               Function invoked when response received.
+                                  [default: os_pywf.commands.curl.callback]
+
+    --errback TEXT                Function invoked when request fail (callback
+                                  will be invoked when no errback).
+
+    --parallel                    Send requests parallelly.
+    --log-level [CRITICAL|ERROR|WARNING|INFO|DEBUG]
+                                  Log level.  [default: INFO]
+    --debug                       Enable debug mode.
+  --help                          Show this message and exit.
+```
+
+
+
+Example:
+
+```
 # app.py
 def callback(task, request, response):
     print(request, response)
@@ -71,6 +131,8 @@ def callback(task, request, response):
 ```
 os-pywf curl http://www.example.com/ --callback app.callback
 ```
+
+
 
 Features:
 
