@@ -178,7 +178,7 @@ We provide more useful features which PyWorkflow not support directly:
 * authentication
 * post urlencode data and multipart files upload
 
-You can use Session to configure same settings of  a group tasks, it also auto manipulate cookies and provide cancel function to cancel all tasks create from same session. You can create Session as normal class or as a context manager:
+You can use Session to configure same settings of  a group tasks, it also auto manipulate cookies and provide cancel function to cancel all tasks create by the same session. You can create Session as normal class or as a context manager:
 
 ```
 import pywf
