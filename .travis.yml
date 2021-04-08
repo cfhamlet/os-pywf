@@ -13,7 +13,7 @@ deploy:
   user: cfhamlet
   script: pip install --upgrade setuptools wheel
   password:
-    secure: 
+    secure: OGRKkl8TL84SpkuZOW8sm4St/1/CM4eJq8T1r1VopIV3OSthA6KH7i06oP5+xwL9dpm725ymIqDlXfW+PdXpQUMCl9yspgI7z4EdSiqaM682IkcBktOnC95ISrMLDzthx9rIELBLW74sJvv7kiQIjDsm3JaSZjZfAJpj6WpFtbsm3W7rTzjqk6RkuQhHzWrW84NvdIDRKodywGqCG9ZAyEUDielZ6IA9ZAksFka9EGag1Vtl+4q/qhEChA0a4zJw7oEpeMauC49xi9yoWQWAlznpVUv+0BkRQVJ5G8If1vnwj/aNca3ZMDXm0jmNfTYZzxVrxeS4xKr5ENzYfEDANtj0Db+Ss9lPEGzqxMzzVWDPaTGIt2DjbWdz3dMadNf/HjB+soHuXF3RDsg9KVGK2y1qMuJCUJ3Y6sA7dUiYefvObxvQhedD1qmqriAanqBXJ/GaS+w8iFeu+N71G2Ofy/wzMt64eqSerTwZK9jAGvtibGkc9aA4P7n2v0o/vufF3DOpAN4Js8bWmzPcpZQNU6RbxuK/29BFG4Y7k2h4omIFN47U4hFvp3IOYqfRn4ZpaUtZ6M3UQCsJ0HzDG0/K3WYXvu0mfqLoENbxRD1jiDfdB0EvYyK4vGlY5gPF21t4DVGuH0jzjgZP6HUEWdUIPRyG7emlP/NQHD86JjKZxEY=
   true:
     tags: true
     condition: ${TRAVIS_PYTHON_VERSION} == 3.6
