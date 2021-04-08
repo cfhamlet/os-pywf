@@ -7,7 +7,7 @@
 
 [Workflow](https://github.com/sogou/workflow) and it's Python binding [PyWorkflow](https://github.com/sogou/pyworkflow) are great async frameworks.
 
-This project is trying to explore the power of Workflow and provide command line tools and high level APIs for real world development.
+This project is trying to explore the power of Workflow, provide command line tools and high level APIs for real world development.
 
 ## Install
 
