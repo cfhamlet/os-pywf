@@ -298,13 +298,15 @@ class Session(object):
 
         def _callback(task):
             if self.cancelled():
+                series = pywf.series_of(task)
+                if not series.is_canceled():
+                    series.cancel()
                 return
             udata = task.get_user_data()
             if not isinstance(udata, dict) or (
                 "_user_data" not in udata and "_request" not in udata
             ):
                 task.set_user_data({"_user_data": udata, "_request": request})
-            pywf.series_of(task)
             elapsed = preferred_clock() - extras["_start"]
             response = build_response(task, request)
             udata = task.get_user_data()
