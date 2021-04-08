@@ -56,7 +56,7 @@ def default_headers():
     )
 
 
-def build_response(
+def _build_response(
     task: pywf.HttpTask, request: PreparedRequest
 ) -> Union[Response, Failure]:
     response = Response()
@@ -83,6 +83,15 @@ def build_response(
     response.raw = raw
 
     return response
+
+
+def build_response(
+    task: pywf.HttpTask, request: PreparedRequest
+) -> Union[Response, Failure]:
+    try:
+        return _build_response(task, request)
+    except Exception as e:
+        return Failure(e, None)
 
 
 class Session(object):
