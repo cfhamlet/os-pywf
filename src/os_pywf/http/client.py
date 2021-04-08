@@ -26,6 +26,7 @@ from requests.sessions import (
 from requests.status_codes import codes
 from requests.structures import CaseInsensitiveDict
 from requests.utils import get_encoding_from_headers, requote_uri, rewind_body
+from urllib3.response import HTTPResponse
 
 import os_pywf
 from os_pywf.exceptions import Failure, WFException
@@ -68,11 +69,18 @@ def build_response(
     resp = task.get_resp()
 
     response.status_code = int(resp.get_status_code())
-    response.headers = CaseInsensitiveDict(dict(resp.get_headers()))
+    headers = dict(resp.get_headers())
+    response.headers = CaseInsensitiveDict(headers)
     response.encoding = get_encoding_from_headers(response.headers)
-    response.raw = BytesIO(resp.get_body())
     response.reason = resp.get_reason_phrase()
     extract_cookies_to_jar(response.cookies, request, response)
+    raw = HTTPResponse(
+        headers=headers,
+        body=BytesIO(resp.get_body()),
+        preload_content=False,
+        request_method=request.method,
+    )
+    response.raw = raw
 
     return response
 
