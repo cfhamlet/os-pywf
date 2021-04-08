@@ -1,8 +1,7 @@
 import logging
 import threading
 from datetime import timedelta
-from http.client import HTTPMessage
-from io import BytesIO, StringIO
+from io import BytesIO
 from typing import Any, Union
 from urllib.parse import urljoin, urlparse
 
@@ -10,13 +9,7 @@ import pywf
 from requests import PreparedRequest, Request, Response
 from requests._internal_utils import to_native_string
 from requests.compat import cookielib
-from requests.cookies import (
-    MockRequest,
-    MockResponse,
-    RequestsCookieJar,
-    cookiejar_from_dict,
-    merge_cookies,
-)
+from requests.cookies import RequestsCookieJar, cookiejar_from_dict, merge_cookies
 from requests.exceptions import (
     ChunkedEncodingError,
     ContentDecodingError,
@@ -79,16 +72,7 @@ def build_response(
     response.encoding = get_encoding_from_headers(response.headers)
     response.raw = BytesIO(resp.get_body())
     response.reason = resp.get_reason_phrase()
-    response.cookies.extract_cookies(
-        MockResponse(
-            HTTPMessage(
-                StringIO(
-                    "\r\n".join([f"{k}: {v}" for k, v in response.headers.items()])
-                )
-            )
-        ),
-        MockRequest(request),
-    )
+    extract_cookies_to_jar(response.cookies, request, response)
 
     return response
 
