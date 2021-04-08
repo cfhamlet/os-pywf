@@ -255,18 +255,17 @@ You can use Session to configure same settings of  a group tasks, it also auto m
 ```
 import pywf
 from os_pywf.http import client
+from os_pywf.utils import create_series_work
 
 def callback(task, request, response):
     print(request, response)
     
-series = pywf.create_series_work(pywf.create_empty_task(), None)
-
+series = create_series_work()
 headers = {"User-Agent": "os-pywf/beta"}
 with client.Session(headers=headers, callback=callback) as session:
-    for url in ["http://www.example.com/", "http://www.google.com/"]:
+    for url in ["http://www.example.com/", "http://httpbin.org/"]:
         task = session.get(url)
         series.push_back(task)
-    
 series.start()
 pywf.wait_finish()
 ```
@@ -311,7 +310,7 @@ For callback async type of Workflow, we provide two functions as request/session
 
 ### os_pywf.utils
 
-* **create_series_work**, wrap the create_series_work of PyWorkflow, do not need a task as first parameter.
+* **create_series_work**, wrap the create_series_work of PyWorkflow, you can pass arbitrary tasks to create series.
 
 * **create_timer_task**, wrap the create_timer_task of PyWorkflow. It split the wait time into small time pieces, so it can be canceled as soon as possible.
 
