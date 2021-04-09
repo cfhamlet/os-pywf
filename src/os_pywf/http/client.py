@@ -311,7 +311,7 @@ class Session(object):
         if isinstance(request, Request):
             raise ValueError("You can only send PreparedRequests.")
 
-        extras = {"_start": preferred_clock()}
+        extras = {"_start": preferred_clock()} # [TODO] not the real start time
 
         def _callback(task):
             if self.canceled():
