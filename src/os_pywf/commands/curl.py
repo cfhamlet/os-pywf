@@ -324,8 +324,7 @@ def cli(ctx, **kwargs):
 
     proxies = None
     if kwargs.get("proxy", None):
-        proxy = kwargs.pop("proxy")
-        proxies = {"http": proxy, "https": proxy}
+        proxies = {"http": kwargs.pop("proxy")}
 
     with Session(
         version=version,
