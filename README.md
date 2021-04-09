@@ -94,6 +94,7 @@ Options:
                                   [default: 0]
 
     --retry-delay FLOAT           Time between two retries(s).  [default: 0]
+    -x, --proxy TEXT              Specify proxy.
     -X, --request [DELETE|GET|HEAD|OPTIONS|PATCH|POST|PUT]
                                   Request method. [default: GET]
   Additional options:             Additional options.
@@ -143,10 +144,11 @@ Features:
 * Support upload files as multipart form
 * Support redirect. Response history can be accessed with [response.history](https://docs.python-requests.org/en/master/api/#requests.Response.history)
 * Support retry and retry interval.  The program can be quickly canceled when retrying
-* Support auto decompress response data
 * All requests can be send parallelly (async not multithread)
 * Custom startup/cleanup/callback/errback function as plugins
 * Callback with request and response parameters of the most famous [Requests](https://github.com/psf/requests) library
+* Support auto decompress response data (v0.0.2)
+* Support set proxy for http (not https) request (v0.0.3)
 
 Issues/Not support:
 
@@ -247,26 +249,26 @@ We provide more useful features which PyWorkflow not support directly:
 * redirect responses history
 * retry interval and quick cancel
 * authentication
-* auto decompress response data
 * post urlencode data and multipart files upload
+* auto decompress response data (v0.0.2)
+* set proxy for http (not https) request (v0.0.3)
 
 You can use Session to configure same settings of  a group tasks, it also auto manipulate cookies and provide cancel function to cancel all tasks create by the same session. You can create Session as normal class or as a context manager:
 
 ```
 import pywf
 from os_pywf.http import client
+from os_pywf.utils import create_series_work
 
 def callback(task, request, response):
     print(request, response)
     
-series = pywf.create_series_work(pywf.create_empty_task(), None)
-
+series = create_series_work()
 headers = {"User-Agent": "os-pywf/beta"}
 with client.Session(headers=headers, callback=callback) as session:
-    for url in ["http://www.example.com/", "http://www.google.com/"]:
+    for url in ["http://www.example.com/", "http://httpbin.org/"]:
         task = session.get(url)
         series.push_back(task)
-    
 series.start()
 pywf.wait_finish()
 ```
@@ -311,7 +313,7 @@ For callback async type of Workflow, we provide two functions as request/session
 
 ### os_pywf.utils
 
-* **create_series_work**, wrap the create_series_work of PyWorkflow, do not need a task as first parameter.
+* **create_series_work**, wrap the create_series_work of PyWorkflow, you can pass arbitrary tasks to create series.
 
 * **create_timer_task**, wrap the create_timer_task of PyWorkflow. It split the wait time into small time pieces, so it can be canceled as soon as possible.
 

@@ -165,6 +165,7 @@ def load_cookiejar(s: str):
     show_default=True,
     help="Time between two retries(s).",
 )
+@optgroup.option("-x", "--proxy", type=click.STRING, help="Specify proxy.")
 @optgroup.option(
     "-X",
     "--request",
@@ -321,10 +322,15 @@ def cli(ctx, **kwargs):
         if len(auth) == 1:
             auth = (auth[0], "")  # [TODO] prompt for password
 
+    proxies = None
+    if kwargs.get("proxy", None):
+        proxies = {"http": kwargs.pop("proxy")}
+
     with Session(
         version=version,
         headers=headers,
         auth=auth,
+        proxies=proxies,
         cookies=cookiejar,
         timeout=timeout,
         disable_keepalive=no_keepalive,
@@ -345,7 +351,7 @@ def cli(ctx, **kwargs):
                 method=method if method is not None else "GET",
             )
             if parallel:
-                o = pywf.create_series_work(o, None)
+                o = create_series_work(o)
             append(o)
 
         def _cancel(signum, frame):
