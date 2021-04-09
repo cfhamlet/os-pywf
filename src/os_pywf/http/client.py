@@ -8,6 +8,7 @@ from urllib.parse import urljoin, urlparse
 import pywf
 from requests import PreparedRequest, Request, Response
 from requests._internal_utils import to_native_string
+from requests.auth import _basic_auth_str
 from requests.compat import cookielib
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict, merge_cookies
 from requests.exceptions import (
@@ -25,8 +26,16 @@ from requests.sessions import (
 )
 from requests.status_codes import codes
 from requests.structures import CaseInsensitiveDict
-from requests.utils import get_encoding_from_headers, requote_uri, rewind_body
+from requests.utils import (
+    get_auth_from_url,
+    get_encoding_from_headers,
+    prepend_scheme_if_needed,
+    requote_uri,
+    rewind_body,
+    select_proxy,
+)
 from urllib3.response import HTTPResponse
+from urllib3.util import parse_url
 
 import os_pywf
 from os_pywf.exceptions import Failure, WFException
@@ -121,6 +130,7 @@ class Session(object):
         headers=None,
         cookies=None,
         auth=None,
+        proxies=None,
         hooks=None,
         params=None,
         allow_redirects=True,
@@ -136,6 +146,7 @@ class Session(object):
         self.headers = default_headers() if headers is None else headers
         self.cookies = cookiejar_from_dict({}) if cookies is None else cookies
         self.auth = auth
+        self.proxies = {} if proxies is None else proxies
         self.hooks = default_hooks() if hooks is None else hooks
         self.params = {} if params is None else params
         self.allow_redirects = allow_redirects
@@ -311,7 +322,7 @@ class Session(object):
         if isinstance(request, Request):
             raise ValueError("You can only send PreparedRequests.")
 
-        extras = {"_start": preferred_clock()} # [TODO] not the real start time
+        extras = {"_start": preferred_clock()}  # [TODO] not the real start time
 
         def _callback(task):
             if self.canceled():
@@ -379,12 +390,29 @@ class Session(object):
                         f"unexpected exception from {do.__module__}.{do.__name__} {e}"
                     )
 
-        task = pywf.create_http_task(request.url, 0, 0, _callback)
-        return self._prepare_task(task, request, **kwargs)
+        return self.create_http_task(request, _callback, **kwargs)
 
-    def _prepare_task(
-        self, task: pywf.HttpTask, request: PreparedRequest, **kwargs
-    ) -> pywf.HttpTask:
+    def create_http_task(self, request: PreparedRequest, cb, **kwargs) -> pywf.HttpTask:
+        proxies = kwargs.get("proxies", self.proxies)
+        proxy = select_proxy(request.url, proxies)
+        request_url_parsed = None
+        if not proxy:
+            task = pywf.create_http_task(request.url, 0, 0, cb)
+        else:
+            proxy = prepend_scheme_if_needed(proxy, "http")
+            proxy_url_parsed = parse_url(proxy)
+            task = pywf.create_http_task(proxy_url_parsed.url, 0, 0, cb)
+            request_url_parsed = urlparse(request.url)
+            if (
+                request_url_parsed.scheme != "http"
+                or proxy_url_parsed.scheme.startswith("socks")
+            ):
+                raise NotImplementedError(
+                    "Not support https URL with proxy"
+                )  # [TODO] crash
+            # should remove auth from url?
+            # request.url = urldefragauth(request.url)
+
         timeout = kwargs.get("timeout", self.timeout)
         if timeout:
             if isinstance(timeout, tuple):
@@ -407,11 +435,20 @@ class Session(object):
             req.append_body(request.body)
         req.set_http_version(kwargs.get("version", self.version))
         for k, v in request.headers.items():
-            req.add_header_pair(k, v)
+            req.set_header_pair(k, v)
         max_size = kwargs.get("max_size", self.max_size)
         if max_size is not None:
             resp = task.get_resp()
             resp.set_size_limit(max_size)
+        if proxy:
+            req.set_request_uri(request.url)
+            username, password = get_auth_from_url(proxy)
+            if username:
+                req.set_header_pair(
+                    "Proxy-Authorization", _basic_auth_str(username, password)
+                )
+            req.set_header_pair("Host", request_url_parsed.netloc)
+
         return task
 
     def __enter__(self):
