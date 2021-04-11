@@ -165,7 +165,12 @@ def load_cookiejar(s: str):
     show_default=True,
     help="Time between two retries(s).",
 )
-@optgroup.option("-x", "--proxy", type=click.STRING, help="Specify proxy.")
+@optgroup.option(
+    "-x",
+    "--proxy",
+    type=click.STRING,
+    help="Specify proxy <[protocol://][user:password@]proxyhost[:port]>. Only proxy http URL.",
+)
 @optgroup.option(
     "-X",
     "--request",

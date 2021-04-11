@@ -399,17 +399,18 @@ class Session(object):
         if not proxy:
             task = pywf.create_http_task(request.url, 0, 0, cb)
         else:
+            request_url_parsed = urlparse(request.url)
+            request_scheme = request_url_parsed.scheme.lower()
+            if request_scheme != "http":
+                raise NotImplementedError(f"Not support proxy for {request_scheme}")
+
             proxy = prepend_scheme_if_needed(proxy, "http")
             proxy_url_parsed = parse_url(proxy)
+            proxy_scheme = proxy_url_parsed.scheme.lower()
+            if proxy_scheme != "http":
+                raise NotImplementedError(f"Not support {proxy_scheme} proxy")
+
             task = pywf.create_http_task(proxy_url_parsed.url, 0, 0, cb)
-            request_url_parsed = urlparse(request.url)
-            if (
-                request_url_parsed.scheme != "http"
-                or proxy_url_parsed.scheme.startswith("socks")
-            ):
-                raise NotImplementedError(
-                    "Not support https URL with proxy"
-                )  # [TODO] crash
             # should remove auth from url?
             # request.url = urldefragauth(request.url)
 
