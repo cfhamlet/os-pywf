@@ -228,9 +228,11 @@ class Session(object):
             cookies=cookies,
             hooks=hooks,
         )
-        prep = self.prepare_request(req)
-        task = self.send(prep, **kwargs)
-        return task
+        return self._request(req, **kwargs)
+
+    def _request(self, request: Request, **kwargs):
+        prep = self.prepare_request(request)
+        return self.send(prep, **kwargs)
 
     def retry(self, task, request, **kwargs):
         retry_delay = kwargs.get("retry_delay", self.retry_delay)
@@ -320,7 +322,7 @@ class Session(object):
     ) -> pywf.HttpTask:
 
         if isinstance(request, Request):
-            raise ValueError("You can only send PreparedRequests.")
+            return self._request(reqeust, **kwargs)
 
         extras = {"_start": preferred_clock()}  # [TODO] not the real start time
 
@@ -383,12 +385,46 @@ class Session(object):
             if do:
                 _request = udata["_request"]
                 task.set_user_data(udata["_user_data"])
+                results = None
                 try:
-                    do(task, _request, response)
+                    results = do(task, _request, response)
                 except Exception as e:
                     logger.error(
                         f"unexpected exception from {do.__module__}.{do.__name__} {e}"
                     )
+
+                def _task(t):
+                    if isinstance(t, str):
+                        return self.get(t)
+                    elif isinstance(t, PreparedRequest):
+                        return self.send(t)  # send without session param
+                    elif isinstance(t, Request):
+                        return self.send(t)
+                    elif isinstance(t, pywf.SubTask):
+                        return t
+                    logger.warn(f"not supported type {type(t)}")
+
+                def _tasks(s):
+                    r = []
+                    if isinstance(s, list):
+                        r = [_task(t) for t in s]
+                    r = [_task(s)]
+                    return [t for t in r if t is not None]
+
+                if results is None:
+                    return
+                pre, post = [], []
+                if isinstance(results, tuple):
+                    l = len(results)
+                    if l >= 1:
+                        pre = _tasks(results[0])
+                    if l >= 2:
+                        post = _tasks(results[1])
+                else:
+                    pre = _tasks(results)
+                series = pywf.series_of(task)
+                list(map(series.push_front, pre[::-1]))
+                list(map(series.push_back, post))
 
         return self.create_http_task(request, _callback, **kwargs)
 
@@ -399,17 +435,18 @@ class Session(object):
         if not proxy:
             task = pywf.create_http_task(request.url, 0, 0, cb)
         else:
+            request_url_parsed = urlparse(request.url)
+            request_scheme = request_url_parsed.scheme.lower()
+            if request_scheme != "http":
+                raise NotImplementedError(f"Not support proxy for {request_scheme}")
+
             proxy = prepend_scheme_if_needed(proxy, "http")
             proxy_url_parsed = parse_url(proxy)
+            proxy_scheme = proxy_url_parsed.scheme.lower()
+            if proxy_scheme != "http":
+                raise NotImplementedError(f"Not support {proxy_scheme} proxy")
+
             task = pywf.create_http_task(proxy_url_parsed.url, 0, 0, cb)
-            request_url_parsed = urlparse(request.url)
-            if (
-                request_url_parsed.scheme != "http"
-                or proxy_url_parsed.scheme.startswith("socks")
-            ):
-                raise NotImplementedError(
-                    "Not support https URL with proxy"
-                )  # [TODO] crash
             # should remove auth from url?
             # request.url = urldefragauth(request.url)
 

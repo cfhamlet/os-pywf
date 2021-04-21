@@ -149,6 +149,7 @@ Features:
 * Callback with request and response parameters of the most famous [Requests](https://github.com/psf/requests) library
 * Support auto decompress response data (v0.0.2)
 * Support set proxy for http (not https) request (v0.0.3)
+* Generate requests from callback and download continuously (v0.0.4)
 
 Issues/Not support:
 
@@ -185,40 +186,8 @@ The command provides two types of options, **curl options** and **additional opt
     os-pywf curl http://www.example.com/ --startup app.startup --cleanup app.cleanup
     ```
 
-* ``--callback``, a function invoked when response received
+* ``--callback``,  ``--errback`` functions invoked when response received or fail, see [more details](#callbackerrback)
   
-    We wrap PyWorkflow with most famous Python HTTP library [Requests](https://github.com/psf/requests) and provide more powerful callback. The callback function have three parameters: task, request and response.
-    
-    ```
-    # app.py
-    def callback(task, request, response):
-        pass
-    ```
-    
-    ```
-    os-pywf curl http://www.example.com/ --callback app.callback
-    ```
-    
-    * **task**, the PyWorkflow HttpTask object
-    * **request**,  [requests.PreparedRequest](https://docs.python-requests.org/en/master/api/#requests.PreparedRequest) object, it is the original request even though there are retries and redirects
-    * **response**, [requests.Response](https://docs.python-requests.org/en/master/api/#requests.Response) object, it is the final response when there are retries and redirects.  You can get all the response when redirect occur. If not configure errback function, the response will be ``os_pywf.exceptions.Failure`` object when transaction fail (all HTTP response treat as success)
-
-* ``--errback``, a function invoked when request fail. It can be ignored, all of the response and fail will invoke callback function. When provide, transaction fail will invoke this function not callback function
-
-    ```
-    # app.py
-    def errback(task, request, failure):
-        pass
-    ```
-
-    ```
-    os-pywf curl http://www.example.com/ --errback app.errback
-    ```
-
-    * **task**, the PyWorkflow HttpTask object
-    * **request**, same as the parameter of callback
-    * **failure**, ``os_pywf.exceptions.Failure`` object, it has two properties: exception and value. The value property maybe None or [requests.Response](https://docs.python-requests.org/en/master/api/#requests.Response) depends on the fail situation
-    
 * ``--parallel``,  requests will be send parallelly. Attention, the framework is asynchronous, all callback/errback invoked in one thread. Block operations in callback/errback will block the whole world
 
 ## APIs
@@ -286,9 +255,11 @@ with client.Session() as session:
 ...
 ```
 
-
+#### callback/errback
 
 For callback async type of Workflow, we provide two functions as request/session parameters for framework: callback and errback
+
+We wrap PyWorkflow with most famous Python HTTP library [Requests](https://github.com/psf/requests) and provide more powerful callback and errback
 
 * **callback**, invoked when response received,  three parameters: task, request, response
   
@@ -310,6 +281,15 @@ For callback async type of Workflow, we provide two functions as request/session
     * **task**, the PyWorkflow HttpTask object
     * **request**, same as the parameter of callback
     * **Failure**, ``os_pywf.exceptions.Failure`` object, it has two properties: exception and value. The value property maybe None or [requests.Response](https://docs.python-requests.org/en/master/api/#requests.Response) depends on the fail situation
+    
+* both callback and errback can have return value (from v0.0.4) for framework to schedule. There are several types object can be returned
+
+    * ``str``，must be URL，it will be wrapped with session as HttpTask and add to the head of the series 
+    * ``requests.Request``, it will be wrapped with session as HttpTask and add to the head of the series
+    * ``requests.PreparedRequest``, it will be wrapped **without** session as HttpTask and add to the head of the series
+    * ``pywf.SubTask``, it will be add to the head of the series
+    * ``list``, the elements will be treated as above object add to the head of the series from last to first
+    * ``tuple``, first element treated as above object, second element will add to the tail of the series 
 
 ### os_pywf.utils
 

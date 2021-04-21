@@ -1,4 +1,4 @@
 click
 click-option-group
 requests
-pywf
+pywf>=0.0.4
