@@ -287,7 +287,7 @@ def cli(ctx, **kwargs):
     )
 
     version = HTTP_10 if kwargs.pop("http10") else HTTP_11
-    no_keepalive = not kwargs.pop("no_keepalive")
+    no_keepalive = kwargs.pop("no_keepalive")
     retry = kwargs.pop("retry")
     retry_delay = kwargs.pop("retry_delay")
     max_redirs = kwargs.pop("max_redirs")

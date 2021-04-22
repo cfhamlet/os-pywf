@@ -58,9 +58,9 @@ def default_headers():
     return CaseInsensitiveDict(
         {
             "User-Agent": default_user_agent(),
-            "Accept-Encoding": ", ".join(("gzip", "deflate")),
-            "Accept": "*/*",
-            "Connection": "keep-alive",
+            # "Accept-Encoding": ", ".join(("gzip", "deflate")),
+            # "Accept": "*/*",
+            # "Connection": "keep-alive",
         }
     )
 
@@ -464,7 +464,7 @@ class Session(object):
                 task.set_receive_timeout(timeout[1] * MILLION)
 
         task.set_keep_alive(
-            1 if kwargs.get("disable_keepalive", self.disable_keepalive) else 0
+            0 if kwargs.get("disable_keepalive", self.disable_keepalive) else 1
         )
         req = task.get_req()
         req.set_method(request.method)
@@ -485,7 +485,6 @@ class Session(object):
                     "Proxy-Authorization", _basic_auth_str(username, password)
                 )
             req.set_header_pair("Host", request_url_parsed.netloc)
-
         return task
 
     def __enter__(self):
@@ -538,35 +537,35 @@ def request(
 
 def get(url, params=None, **kwargs):
     kwargs.pop("method", None)
-    return request(url, params=params, **kwargs)
+    return request(url, method="GET", params=params, **kwargs)
 
 
 def options(url, **kwargs):
     kwargs.pop("method", None)
-    return request(url, "OPTIONS", **kwargs)
+    return request(url, method="OPTIONS", **kwargs)
 
 
 def head(url, **kwargs):
     kwargs.pop("method", None)
     kwargs.setdefault("allow_redirects", False)
-    return request(url, "HEAD", **kwargs)
+    return request(url, method="HEAD", **kwargs)
 
 
 def post(url, data=None, json=None, **kwargs):
     kwargs.pop("method", None)
-    return request(url, "POST", data=data, json=json, **kwargs)
+    return request(url, method="POST", data=data, json=json, **kwargs)
 
 
 def put(url, data=None, **kwargs):
     kwargs.pop("method", None)
-    return request(url, "PUT", data=data, **kwargs)
+    return request(url, method="PUT", data=data, **kwargs)
 
 
 def patch(url, data=None, **kwargs):
     kwargs.pop("method", None)
-    return request(url, "PATCH", data=data, **kwargs)
+    return request(url, method="PATCH", data=data, **kwargs)
 
 
 def delete(url, **kwargs):
     kwargs.pop("method", None)
-    return request(url, "DELETE", data=data, **kwargs)
+    return request(url, method="DELETE", data=data, **kwargs)
