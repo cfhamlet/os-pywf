@@ -58,9 +58,9 @@ def default_headers():
     return CaseInsensitiveDict(
         {
             "User-Agent": default_user_agent(),
-            "Accept-Encoding": ", ".join(("gzip", "deflate")),
-            "Accept": "*/*",
-            "Connection": "keep-alive",
+            # "Accept-Encoding": ", ".join(("gzip", "deflate")),
+            # "Accept": "*/*",
+            # "Connection": "keep-alive",
         }
     )
 
@@ -464,7 +464,7 @@ class Session(object):
                 task.set_receive_timeout(timeout[1] * MILLION)
 
         task.set_keep_alive(
-            1 if kwargs.get("disable_keepalive", self.disable_keepalive) else 0
+            0 if kwargs.get("disable_keepalive", self.disable_keepalive) else 1
         )
         req = task.get_req()
         req.set_method(request.method)
@@ -485,7 +485,6 @@ class Session(object):
                     "Proxy-Authorization", _basic_auth_str(username, password)
                 )
             req.set_header_pair("Host", request_url_parsed.netloc)
-
         return task
 
     def __enter__(self):
