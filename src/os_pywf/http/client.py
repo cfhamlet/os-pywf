@@ -537,35 +537,35 @@ def request(
 
 def get(url, params=None, **kwargs):
     kwargs.pop("method", None)
-    return request(url, params=params, **kwargs)
+    return request(url, method="GET", params=params, **kwargs)
 
 
 def options(url, **kwargs):
     kwargs.pop("method", None)
-    return request(url, "OPTIONS", **kwargs)
+    return request(url, method="OPTIONS", **kwargs)
 
 
 def head(url, **kwargs):
     kwargs.pop("method", None)
     kwargs.setdefault("allow_redirects", False)
-    return request(url, "HEAD", **kwargs)
+    return request(url, method="HEAD", **kwargs)
 
 
 def post(url, data=None, json=None, **kwargs):
     kwargs.pop("method", None)
-    return request(url, "POST", data=data, json=json, **kwargs)
+    return request(url, method="POST", data=data, json=json, **kwargs)
 
 
 def put(url, data=None, **kwargs):
     kwargs.pop("method", None)
-    return request(url, "PUT", data=data, **kwargs)
+    return request(url, method="PUT", data=data, **kwargs)
 
 
 def patch(url, data=None, **kwargs):
     kwargs.pop("method", None)
-    return request(url, "PATCH", data=data, **kwargs)
+    return request(url, method="PATCH", data=data, **kwargs)
 
 
 def delete(url, **kwargs):
     kwargs.pop("method", None)
-    return request(url, "DELETE", data=data, **kwargs)
+    return request(url, method="DELETE", data=data, **kwargs)
